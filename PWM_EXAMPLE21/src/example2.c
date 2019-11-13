@@ -75,11 +75,15 @@
 
 #include <asf.h>
 
-struct pwm_config pwm_1_cfg;
-struct pwm_config pwm_2_cfg;
+struct pwm_config pwm_topA;
+struct pwm_config pwm_botA;
+struct pwm_config pwm_topB;
 
-volatile uint8_t duty_cycle_percent_1 = 0;
-volatile uint8_t duty_cycle_percent_2 = 0;
+volatile uint8_t duty_cycle_percent_topA = 0;
+volatile uint8_t duty_cycle_percent_topB = 0;
+volatile uint8_t duty_cycle_percent_botA = 0;
+
+volatile uint8_t step = 0;
 
 /**
  * \brief PWM channel 1 interrupt callback function
@@ -87,11 +91,58 @@ volatile uint8_t duty_cycle_percent_2 = 0;
 static void pwm_callback_1 (void)
 {
 	/* Increase (and wrap at 100) the duty cycle */
-	if (duty_cycle_percent_1++ >= 100) {
-		duty_cycle_percent_1 = 0;
+	if (duty_cycle_percent_topA++ >= 100) {
+		duty_cycle_percent_topA = 50;
+	}
+	duty_cycle_percent_topA = 10;
+	/* Set new duty cycle value */
+	pwm_set_duty_cycle_percent(&pwm_topA, duty_cycle_percent_topA);
+}
+
+static void pwm_callback_topB (void)
+{
+	/* Increase (and wrap at 100) the duty cycle */
+	if (duty_cycle_percent_topB++ >= 50) {
+		duty_cycle_percent_topB = 10;
 	}
 	/* Set new duty cycle value */
-	pwm_set_duty_cycle_percent(&pwm_1_cfg, duty_cycle_percent_1);
+	pwm_set_duty_cycle_percent(&pwm_topB, duty_cycle_percent_topB);
+	
+	//pwm_set_duty_cycle_percent(&pwm_topA, 20);
+	
+	
+	if (step++ >= 6) {
+		step = 0;
+	}
+	
+	switch (step){
+		case 0:
+			pwm_set_duty_cycle_percent(&pwm_topA, 100);
+			pwm_set_duty_cycle_percent(&pwm_botA, 0);
+			break;
+		case 1:
+			pwm_set_duty_cycle_percent(&pwm_topA, 0);
+			pwm_set_duty_cycle_percent(&pwm_botA, 0);
+			break;
+		case 2:
+			pwm_set_duty_cycle_percent(&pwm_topA, 0);
+			pwm_set_duty_cycle_percent(&pwm_botA, 0);
+			break;
+		case 3:
+			pwm_set_duty_cycle_percent(&pwm_topA, 0);
+			pwm_set_duty_cycle_percent(&pwm_botA, 75);
+			break;
+		case 4:
+			pwm_set_duty_cycle_percent(&pwm_topA, 0);
+			pwm_set_duty_cycle_percent(&pwm_botA, 75);
+			break;
+		case 5:
+			pwm_set_duty_cycle_percent(&pwm_topA, 100);
+			pwm_set_duty_cycle_percent(&pwm_botA, 0);
+			break;
+		default:
+			break;
+	}
 }
 
 /**
@@ -100,11 +151,12 @@ static void pwm_callback_1 (void)
 static void pwm_callback_2 (void)
 {
 	/* Increase (and wrap at 100) the duty cycle */
-	if (duty_cycle_percent_2++ >= 100) {
-		duty_cycle_percent_2 = 0;
-	}
+	//if (duty_cycle_percent_botA++ >= 100) {
+	//	duty_cycle_percent_botA = 0;
+	//}
+	//duty_cycle_percent_botA = 75;
 	/* Set new duty cycle value */
-	pwm_set_duty_cycle_percent(&pwm_2_cfg, duty_cycle_percent_2);
+	//pwm_set_duty_cycle_percent(&pwm_botA, duty_cycle_percent_botA);
 }
 
 /**
@@ -123,28 +175,27 @@ int main( void )
 	  Set up first PWM channel
 	*/
 
-	/* Set PWM to TC E0, channel A (PE0 = LED0), 75 Hz */
-	pwm_init(&pwm_1_cfg, PWM_TCE0, PWM_CH_A, 75);
-
-	/* Set callback function on TC overflow */
-	pwm_overflow_int_callback(&pwm_1_cfg, pwm_callback_1);
+	/* Set PWM to TC E0, channel A (PD0 = LED0), 75 Hz */
+	pwm_init(&pwm_topA, PWM_TCD0, PWM_CH_A, 2000);
+	//pwm_overflow_int_callback(&pwm_topA, pwm_callback_1);
+	pwm_init(&pwm_topB, PWM_TCD0, PWM_CH_B, 2000);
+	pwm_overflow_int_callback(&pwm_topB, pwm_callback_topB);
 
 	/*
 	  Set up second PWM channel
 	*/
 
-	/* Set PWM to TC E1, channel A (PE4 = LED4), 250 Hz */
-	pwm_init(&pwm_2_cfg, PWM_TCE1, PWM_CH_A, 250);
-
-	/* Set callback function on TC overflow */
-	pwm_overflow_int_callback(&pwm_2_cfg, pwm_callback_2);
+	/* Set PWM to TC E1, channel A (PC0 = LED4), 250 Hz */
+	pwm_init(&pwm_botA, PWM_TCC0, PWM_CH_A, 25000);
+	//pwm_overflow_int_callback(&pwm_botA, pwm_callback_2);
 
 	/*
 	  Start PWM
 	*/
 
-	pwm_start(&pwm_1_cfg, duty_cycle_percent_1);
-	pwm_start(&pwm_2_cfg, duty_cycle_percent_2);
+	pwm_start(&pwm_topA, duty_cycle_percent_topA);
+	pwm_start(&pwm_topB, duty_cycle_percent_topB);
+	pwm_start(&pwm_botA, duty_cycle_percent_botA);
 
 	while(1) {
 		/* Do nothing. Everything is handled by interrupts. */
