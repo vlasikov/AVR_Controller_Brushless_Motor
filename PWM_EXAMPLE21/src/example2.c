@@ -44,12 +44,12 @@
  *
  * \section device_info Device Info
  * This example is made specifically for XMEGA-A1 Xplained. However, any XMEGA
- * board with LEDs connected to PE0 and PE4 may be used.
+ * board with PWM_TOPCs connected to PE0 and PE4 may be used.
  *
- * \section exampledescription Description of the example
- * This example uses two PWM channels on two different LEDs. An interrupt is
+ * \section exampPWM_TOPCescription Description of the example
+ * This example uses two PWM channels on two different PWM_TOPCs. An interrupt is
  * triggered on each PWM TC overrun, and the interrupt handler will increase
- * the duty cycle of the PWM channels, thus fading the LEDs out (since the LEDs
+ * the duty cycle of the PWM channels, thus fading the PWM_TOPCs out (since the PWM_TOPCs
  * are active low, increased duty cycle means more dimmed light).
  * The two PWM channels are running two different frequencies to make the
  * fading speed different.
@@ -75,9 +75,13 @@
 
 #include <asf.h>
 
-struct pwm_config pwm_topA;
 struct pwm_config pwm_botA;
-struct pwm_config pwm_topB;
+struct pwm_config pwm_botB;
+struct pwm_config pwm_botC;
+
+#define PWM_TOPA IOPORT_CREATE_PIN(PORTD, 0)
+#define PWM_TOPB IOPORT_CREATE_PIN(PORTD, 1)
+#define PWM_TOPC IOPORT_CREATE_PIN(PORTD, 2)
 
 volatile uint8_t duty_cycle_percent_topA = 0;
 volatile uint8_t duty_cycle_percent_topB = 0;
@@ -91,58 +95,11 @@ volatile uint8_t step = 0;
 static void pwm_callback_1 (void)
 {
 	/* Increase (and wrap at 100) the duty cycle */
-	if (duty_cycle_percent_topA++ >= 100) {
-		duty_cycle_percent_topA = 50;
-	}
-	duty_cycle_percent_topA = 10;
+	//if (duty_cycle_percent_topA++ >= 100) {
+	//	duty_cycle_percent_topA = 50;
+	//}
 	/* Set new duty cycle value */
-	pwm_set_duty_cycle_percent(&pwm_topA, duty_cycle_percent_topA);
-}
-
-static void pwm_callback_topB (void)
-{
-	/* Increase (and wrap at 100) the duty cycle */
-	if (duty_cycle_percent_topB++ >= 50) {
-		duty_cycle_percent_topB = 10;
-	}
-	/* Set new duty cycle value */
-	pwm_set_duty_cycle_percent(&pwm_topB, duty_cycle_percent_topB);
-	
-	//pwm_set_duty_cycle_percent(&pwm_topA, 20);
-	
-	
-	if (step++ >= 6) {
-		step = 0;
-	}
-	
-	switch (step){
-		case 0:
-			pwm_set_duty_cycle_percent(&pwm_topA, 100);
-			pwm_set_duty_cycle_percent(&pwm_botA, 0);
-			break;
-		case 1:
-			pwm_set_duty_cycle_percent(&pwm_topA, 0);
-			pwm_set_duty_cycle_percent(&pwm_botA, 0);
-			break;
-		case 2:
-			pwm_set_duty_cycle_percent(&pwm_topA, 0);
-			pwm_set_duty_cycle_percent(&pwm_botA, 0);
-			break;
-		case 3:
-			pwm_set_duty_cycle_percent(&pwm_topA, 0);
-			pwm_set_duty_cycle_percent(&pwm_botA, 75);
-			break;
-		case 4:
-			pwm_set_duty_cycle_percent(&pwm_topA, 0);
-			pwm_set_duty_cycle_percent(&pwm_botA, 75);
-			break;
-		case 5:
-			pwm_set_duty_cycle_percent(&pwm_topA, 100);
-			pwm_set_duty_cycle_percent(&pwm_botA, 0);
-			break;
-		default:
-			break;
-	}
+	//pwm_set_duty_cycle_percent(&pwm_topA, duty_cycle_percent_topA);
 }
 
 /**
@@ -159,6 +116,87 @@ static void pwm_callback_2 (void)
 	//pwm_set_duty_cycle_percent(&pwm_botA, duty_cycle_percent_botA);
 }
 
+static void timerC1_tick(void){
+	if (++step >= 6) {
+		step = 0;
+	}
+	
+	switch (step){
+		case 0:
+			ioport_set_pin_level(PWM_TOPA, 1);
+			pwm_set_duty_cycle_percent(&pwm_botA, 0);
+		
+			ioport_set_pin_level(PWM_TOPB, 0);
+			pwm_set_duty_cycle_percent(&pwm_botB, 10);
+		
+			ioport_set_pin_level(PWM_TOPC, 0);
+			pwm_set_duty_cycle_percent(&pwm_botC, 0);
+			break;
+		case 1:
+			ioport_set_pin_level(PWM_TOPA, 1);
+			pwm_set_duty_cycle_percent(&pwm_botA, 0);
+			
+			ioport_set_pin_level(PWM_TOPB, 0);
+			pwm_set_duty_cycle_percent(&pwm_botB, 0);
+			
+			ioport_set_pin_level(PWM_TOPC, 0);
+			pwm_set_duty_cycle_percent(&pwm_botC, 10);
+			break;
+		case 2:
+			ioport_set_pin_level(PWM_TOPA, 0);
+			pwm_set_duty_cycle_percent(&pwm_botA, 0);
+		
+			ioport_set_pin_level(PWM_TOPB, 1);
+			pwm_set_duty_cycle_percent(&pwm_botB, 0);
+		
+			ioport_set_pin_level(PWM_TOPC, 0);
+			pwm_set_duty_cycle_percent(&pwm_botC, 10);
+			break;
+		case 3:
+			ioport_set_pin_level(PWM_TOPA, 0);
+			pwm_set_duty_cycle_percent(&pwm_botA, 10);//75
+		
+			ioport_set_pin_level(PWM_TOPB, 1);
+			pwm_set_duty_cycle_percent(&pwm_botB, 0);
+		
+			ioport_set_pin_level(PWM_TOPC, 0);
+			pwm_set_duty_cycle_percent(&pwm_botC, 0);
+			break;
+		case 4:
+			ioport_set_pin_level(PWM_TOPA, 0);
+			pwm_set_duty_cycle_percent(&pwm_botA, 10);//75
+		
+			ioport_set_pin_level(PWM_TOPB, 0);
+			pwm_set_duty_cycle_percent(&pwm_botB, 0);
+		
+			ioport_set_pin_level(PWM_TOPC, 1);
+			pwm_set_duty_cycle_percent(&pwm_botC, 0);
+			break;
+		case 5:
+			ioport_set_pin_level(PWM_TOPA, 0);
+			pwm_set_duty_cycle_percent(&pwm_botA, 0);
+		
+			ioport_set_pin_level(PWM_TOPB, 0);
+			pwm_set_duty_cycle_percent(&pwm_botB, 10);
+		
+			ioport_set_pin_level(PWM_TOPC, 1);
+			pwm_set_duty_cycle_percent(&pwm_botC, 0);
+			break;
+		default:
+		break;
+	}
+}
+void tc_init(void)
+{
+	//Initialisation du Timer 0
+	tc_enable(&TCC1);	
+	tc_set_overflow_interrupt_callback(&TCC1, timerC1_tick); //Cr?ation d'un callback qui sera execut? quand un overflow du timer sera d?clench?.
+	tc_set_wgm(&TCC1, TC_WG_NORMAL);		//Choix du mode du timer0, dans ce cas il comptera jusqu'? sa valeur "TOP" et retombera ? 0
+	tc_write_period(&TCC1, 15000);			//D?finition de la valeur "TOP"	
+	tc_set_overflow_interrupt_level(&TCC1, TC_INT_LVL_LO);	//Activation de l'interruption du timer 				
+	tc_write_clock_source(&TCC1, TC_CLKSEL_DIV8_gc);		//Activation de l'horloge du timer 0
+}
+
 /**
  * \brief Example 2 main application routine
  */
@@ -170,34 +208,30 @@ int main( void )
 
 	/* Enable global interrupts */
 	cpu_irq_enable();
+	
+	ioport_set_pin_dir(PWM_TOPA, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(PWM_TOPB, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(PWM_TOPC, IOPORT_DIR_OUTPUT);
+	tc_init();
 
 	/*
-	  Set up first PWM channel
+	  Set up PWM channel
 	*/
 
-	/* Set PWM to TC E0, channel A (PD0 = LED0), 75 Hz */
-	pwm_init(&pwm_topA, PWM_TCD0, PWM_CH_A, 2000);
-	//pwm_overflow_int_callback(&pwm_topA, pwm_callback_1);
-	pwm_init(&pwm_topB, PWM_TCD0, PWM_CH_B, 2000);
-	pwm_overflow_int_callback(&pwm_topB, pwm_callback_topB);
-
-	/*
-	  Set up second PWM channel
-	*/
-
-	/* Set PWM to TC E1, channel A (PC0 = LED4), 250 Hz */
+	/* Set PWM to TC E1, channel A (PC0 = PWM_TOPC4), 250 Hz */
 	pwm_init(&pwm_botA, PWM_TCC0, PWM_CH_A, 25000);
 	//pwm_overflow_int_callback(&pwm_botA, pwm_callback_2);
+	pwm_init(&pwm_botB, PWM_TCC0, PWM_CH_B, 25000);
+	pwm_init(&pwm_botC, PWM_TCC0, PWM_CH_C, 25000);
 
 	/*
 	  Start PWM
 	*/
-
-	pwm_start(&pwm_topA, duty_cycle_percent_topA);
-	pwm_start(&pwm_topB, duty_cycle_percent_topB);
-	pwm_start(&pwm_botA, duty_cycle_percent_botA);
+	pwm_start(&pwm_botA, 0);
+	pwm_start(&pwm_botB, 0);
+	pwm_start(&pwm_botC, 0);
 
 	while(1) {
-		/* Do nothing. Everything is handled by interrupts. */
+		/* Do nothing. Everything is handPWM_TOPC by interrupts. */
 	}
 }
