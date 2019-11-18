@@ -35,6 +35,7 @@
     <option id="common.services.basic.gpio" value="Add" config="" content-id="Atmel.ASF" />
     <option id="xmega.drivers.ioport" value="Add" config="" content-id="Atmel.ASF" />
     <option id="xmega.services.pwm" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="xmega.drivers.ac" value="Add" config="" content-id="Atmel.ASF" />
     <option id="xmega.services.pwm.example2" value="Add" config="" content-id="Atmel.ASF" />
   </options>
   <configurations />
@@ -87,6 +88,8 @@
     <file path="src/ASF/xmega/utils/preprocessor/tpaste.h" framework="" version="" source="xmega/utils/preprocessor/tpaste.h" changed="False" content-id="Atmel.ASF" />
     <file path="src/ASF/xmega/utils/progmem.h" framework="" version="" source="xmega/utils/progmem.h" changed="False" content-id="Atmel.ASF" />
     <file path="src/ASF/xmega/utils/status_codes.h" framework="" version="" source="xmega/utils/status_codes.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/xmega/drivers/ac/ac.c" framework="" version="3.47.0" source="xmega\drivers\ac\ac.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/xmega/drivers/ac/ac.h" framework="" version="3.47.0" source="xmega\drivers\ac\ac.h" changed="False" content-id="Atmel.ASF" />
   </files>
   <documentation help="http://asf.atmel.com/docs/3.47.0/xmega.services.pwm.example2.xmega-a1_xplained/html/index.html" />
   <offline-documentation help="" />
@@ -148,6 +151,7 @@
       <Value>../src</Value>
       <Value>../src/config</Value>
       <Value>%24(PackRepoDir)\atmel\XMEGAA_DFP\1.1.68\include</Value>
+      <Value>../src/ASF/xmega/drivers/ac</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
@@ -183,6 +187,7 @@
       <Value>../src</Value>
       <Value>../src/config</Value>
       <Value>%24(PackRepoDir)\atmel\XMEGAA_DFP\1.1.68\include</Value>
+      <Value>../src/ASF/xmega/drivers/ac</Value>
     </ListValues>
   </avrgcc.assembler.general.IncludePaths>
 </AvrGcc>
@@ -224,6 +229,7 @@
       <Value>../src</Value>
       <Value>../src/config</Value>
       <Value>%24(PackRepoDir)\atmel\XMEGAA_DFP\1.1.68\include</Value>
+      <Value>../src/ASF/xmega/drivers/ac</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -260,6 +266,7 @@
       <Value>../src</Value>
       <Value>../src/config</Value>
       <Value>%24(PackRepoDir)\atmel\XMEGAA_DFP\1.1.68\include</Value>
+      <Value>../src/ASF/xmega/drivers/ac</Value>
     </ListValues>
   </avrgcc.assembler.general.IncludePaths>
   <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
@@ -287,6 +294,7 @@
     <Folder Include="src\ASF\xmega\boards\" />
     <Folder Include="src\ASF\xmega\boards\xmega_a1_xplained\" />
     <Folder Include="src\ASF\xmega\drivers\" />
+    <Folder Include="src\ASF\xmega\drivers\ac\" />
     <Folder Include="src\ASF\xmega\drivers\cpu\" />
     <Folder Include="src\ASF\xmega\drivers\pmic\" />
     <Folder Include="src\ASF\xmega\drivers\sleep\" />
@@ -429,6 +437,12 @@
     <Compile Include="src\ASF\xmega\boards\xmega_a1_xplained\init.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\ASF\xmega\drivers\ac\ac.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\xmega\drivers\ac\ac.h">
+      <SubType>compile</SubType>
+    </None>
     <Compile Include="src\ASF\xmega\drivers\cpu\ccp.s">
       <SubType>compile</SubType>
     </Compile>
