@@ -88,6 +88,7 @@ volatile uint8_t duty_cycle_percent_topB = 0;
 volatile uint8_t duty_cycle_percent_botA = 0;
 
 volatile uint8_t step = 0;
+volatile uint8_t step_old = 0;
 
 /**
  * \brief PWM channel 1 interrupt callback function
@@ -103,13 +104,17 @@ static void pwm_callback_1 (void)
 }
 
 #define PD3 IOPORT_CREATE_PIN(PORTD, 3)
+static struct ac_config aca_config;
 static uint8_t second = 0;
 static uint16_t tc_clksel_div = TC_CLKSEL_DIV8_gc;
 static uint16_t Top_tc_period = 15000;
 static const uint16_t Top_tc_period_min = 2000;
 static uint8_t MotorPower = 10;
 static uint8_t MotorPowerMax = 25;
-static bool MotorOk = false;
+static uint8_t MotorStatus = false;
+
+static uint16_t DelayC = 0;
+static uint16_t DelayCMax = 25;
 /**
  * \brief PWM channel 2 interrupt callback function
  */
@@ -122,62 +127,149 @@ static void pwm_callback_2 (void)
 	//duty_cycle_percent_botA = 75;
 	/* Set new duty cycle value */
 	//pwm_set_duty_cycle_percent(&pwm_botA, duty_cycle_percent_botA);
-	
+
+if (MotorStatus == 2){
 	switch (step){
 		case 0:
+			if (step_old != step) {
+				DelayC = 0;
+			}
+			
 			if (ac_get_status(&ACA, 0))
+				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 3), 1);
+			else
+				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 3), 0);
+			
+			if (!ac_get_status(&ACA, 0)){
+				if (DelayC > DelayCMax)
 				pwm_set_duty_cycle_percent(&pwm_botB, 0);
-			else
+				
+				DelayC++;
+			}
+			else{
+				DelayC = 0;
 				pwm_set_duty_cycle_percent(&pwm_botB, MotorPower);
+			}
 			break;
-		case 30:
-			if (!ac_get_status(&ACA, 0))
-				pwm_set_duty_cycle_percent(&pwm_botA, 0);
-			else
-				pwm_set_duty_cycle_percent(&pwm_botA, MotorPower);
-			break;
-		case 4:
-			if (!ac_get_status(&ACA, 0))
-				pwm_set_duty_cycle_percent(&pwm_botA, 0);
-			else
-				pwm_set_duty_cycle_percent(&pwm_botA, MotorPower);
-			break;
-		case 50:
+		case 1:
+			if (step_old != step) {
+				ac_disable(&ACA, 0);
+				ac_set_positive_reference(&aca_config, AC_MUXPOS_PIN1_gc);
+				ac_write_config(&ACA, 0, &aca_config);
+				ac_enable(&ACA, 0);
+			}
+			
 			if (ac_get_status(&ACA, 0))
-				pwm_set_duty_cycle_percent(&pwm_botB, 0);
+				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 4), 1);
 			else
-				pwm_set_duty_cycle_percent(&pwm_botB, MotorPower);
+				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 4), 0);
 			break;
+
+		case 2:			
+			if (step_old != step) {
+				DelayC = 0;
+			}
+			
+			if (ac_get_status(&ACA, 0))
+				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 4), 1);
+			else
+				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 4), 0);
+				
+			if (!ac_get_status(&ACA, 0)){
+				if (DelayC > DelayCMax)
+					pwm_set_duty_cycle_percent(&pwm_botC, 0);
+					
+				DelayC++;
+			}
+			else{
+				DelayC = 0;
+					pwm_set_duty_cycle_percent(&pwm_botC, MotorPower);
+			}
+			break;			
+		case 3:
+			if (step_old != step) {
+				ac_disable(&ACA, 0);
+				ac_set_positive_reference(&aca_config, AC_MUXPOS_PIN0_gc);
+				ac_write_config(&ACA, 0, &aca_config);
+				ac_enable(&ACA, 0);
+			}
+			
+			if (ac_get_status(&ACA, 0))
+				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 5), 1);
+			else
+				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 5), 0);
+			break;
+		case 4:		
+			if (step_old != step) {
+				DelayC = 0;
+			}
+			
+			if (ac_get_status(&ACA, 0))
+				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 5), 1);
+			else
+				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 5), 0);
+			
+			if (!ac_get_status(&ACA, 0)){
+				if (DelayC > DelayCMax)
+					pwm_set_duty_cycle_percent(&pwm_botA, 0);
+					
+				DelayC++;
+			}
+			else{
+				DelayC = 0;
+				pwm_set_duty_cycle_percent(&pwm_botA, MotorPower);
+			}
+			break;
+		case 5:
+			if (step_old != step) {
+				ac_disable(&ACA, 0);
+				ac_set_positive_reference(&aca_config, AC_MUXPOS_PIN2_gc);
+				ac_write_config(&ACA, 0, &aca_config);
+				ac_enable(&ACA, 0);
+			}
+			
+			if (ac_get_status(&ACA, 0))
+				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 3), 1);
+			else
+				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 3), 0);
+				
 		default:
 			break;
 	}
-	
+	step_old = step;
+}
 }
 
 /*
- *freq = 
  *
 */
-static void timerC1_tick(void){	
-	if (++step >= 6) {
-		step = 0;
-	}
-	
+static void timerC1_tick(void){		
 	switch (step){
 		case 0:
 			if (Top_tc_period > Top_tc_period_min) {
-//				Top_tc_period *= 0.99;
-				tc_write_period(&TCC1, Top_tc_period);
-				
-				if (Top_tc_period < 30000)
-//					MotorPower = 10;
+				if (MotorStatus == 1){
+					Top_tc_period *= 0.99;
+				}
+					
+				if (Top_tc_period < 30000){
+					MotorPower = 10;
+				}
+				if (Top_tc_period < 15000){
 					MotorPower = 15;
-				if (Top_tc_period < 15000)
+				}
+				if (Top_tc_period < 10000){
+					MotorPower = 15;
+				}
+				if (Top_tc_period < 5000){
 					MotorPower = 20;
-				if (Top_tc_period < 10000)
+					//MotorStatus = 2;
+				}
+				if (Top_tc_period < 4000){
 					MotorPower = 20;
-				if (Top_tc_period < 5000)
-					MotorPower = 25;
+					MotorStatus = 2;
+				}				
+					
+				tc_write_period(&TCC1, Top_tc_period);
 			}
 			
 			pwm_set_duty_cycle_percent(&pwm_botA, 0);
@@ -249,6 +341,9 @@ static void timerC1_tick(void){
 		default:
 		break;
 	}
+	if (++step >= 6) {
+		step = 0;
+	}
 }
 
 
@@ -259,11 +354,12 @@ void timerD1_tick(void){
 	}
 	
 	switch(second){
-		case 1:
+/*		case 1:
 			MotorPower = 10;
 			tc_clksel_div = TC_CLKSEL_DIV8_gc;
 			break;
-/*		case 2:
+
+		case 2:
 			MotorPower = 15;
 			tc_clksel_div = TC_CLKSEL_DIV4_gc;
 			break;
@@ -274,9 +370,10 @@ void timerD1_tick(void){
 		case 4:
 			MotorPower = 25;
 			tc_clksel_div = TC_CLKSEL_DIV1_gc;
-			break;*/
-		case 3:
-			MotorOk = true;
+			break;
+*/
+		case 1:
+			MotorStatus = 1;
 			pwm_overflow_int_callback(&pwm_botA, pwm_callback_2);
 			break;
 		default:
@@ -308,15 +405,6 @@ void tcd1_init(void)
 	tc_write_clock_source(&TCD1, TC_CLKSEL_DIV1024_gc);		//Activation de l'horloge du timer 0
 }
 
-
-/**
- * \brief Analog comparator window configuration.
- *
- * This struct is intentionally just defined, not declared. The example code
- * will use the helper functions to setup the analog comparator in window mode.
- */
-static struct ac_config aca_config;
-
 /**
  * \brief Analog comparator interrupt callback function
  *
@@ -331,11 +419,22 @@ static struct ac_config aca_config;
  */
 static void example_aca_interrupt_callback(AC_t *ac, uint8_t channel,
 		enum ac_status_t status)
-{
-	if (ac_get_status(&ACA, 0))
-		ioport_set_pin_level(IOPORT_CREATE_PIN(PORTA, 3), 1);
-	else
-		ioport_set_pin_level(IOPORT_CREATE_PIN(PORTA, 3), 0);
+{	
+/*			
+	if (step == 1){
+		if (ac_get_status(&ACA, 0))
+			ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 3), 1);
+		else
+			ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 3), 0);
+	}
+	
+	if (step == 4){
+		if (ac_get_status(&ACA, 0))
+			ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 4), 1);
+		else
+			ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 4), 0);
+	}
+	
 	/*
 	 * If trigger was caused by moving into above or below, switch to
 	 * trigger by being inside. If trigger was caused by moving inside the
@@ -348,7 +447,8 @@ static void example_aca_interrupt_callback(AC_t *ac, uint8_t channel,
 		ac_set_interrupt_mode(&aca_config, AC_INT_MODE_OUTSIDE_WINDOW);
 	}
 */
-//	ac_disable(&ACA, 1);
+//	ac_disable(&ACA, 0);
+//	ac_disable(&ACA, 2);
 //	ac_disable(&ACA, 0);
 //	ac_write_config(&ACA, 0, &aca_config);
 //	ac_enable(&ACA, 0);
@@ -376,7 +476,9 @@ int main( void )
 	ioport_set_pin_dir(IOPORT_CREATE_PIN(PORTD, 3), IOPORT_DIR_OUTPUT);
 	tcd1_init();
 	
-	ioport_set_pin_dir(IOPORT_CREATE_PIN(PORTA, 3), IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(IOPORT_CREATE_PIN(PORTC, 3), IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(IOPORT_CREATE_PIN(PORTC, 4), IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(IOPORT_CREATE_PIN(PORTC, 5), IOPORT_DIR_OUTPUT);
 
 	/*
 	  Set up PWM channel
@@ -401,8 +503,8 @@ int main( void )
 	ac_set_mode(&aca_config, AC_MODE_SINGLE );
 	// ac_set_voltage_scaler(&aca_config, 11);
 	ac_set_hysteresis(&aca_config, AC_HYSMODE_LARGE_gc);
-	ac_set_negative_reference(&aca_config, AC_MUXNEG_PIN0_gc);
-	ac_set_positive_reference(&aca_config, AC_MUXNEG_PIN5_gc);
+	ac_set_positive_reference(&aca_config, AC_MUXPOS_PIN0_gc);
+	ac_set_negative_reference(&aca_config, AC_MUXNEG_PIN5_gc);
 	ac_set_interrupt_mode(&aca_config, AC_INT_MODE_BOTH_EDGES);	// по обоим фронтам
 	ac_set_interrupt_level(&aca_config, AC_INT_LVL_MED);
 	
@@ -412,16 +514,16 @@ int main( void )
 	 */
 	ac_write_config(&ACA, 0, &aca_config);
 	
-	ac_set_negative_reference(&aca_config, AC_MUXNEG_PIN1_gc);
-	/*
-	 * Write configuration of analog comparator B channel 1, other half of
-	 * window configuration.
-	 */	
-	ac_write_config(&ACA, 1, &aca_config);
+//	ac_set_positive_reference(&aca_config, AC_MUXPOS_PIN1_gc);
+//	ac_write_config(&ACA, 1, &aca_config);
+	
+	//ac_set_positive_reference(&aca_config, AC_MUXPOS_PIN2_gc);
+	//ac_write_config(&ACA, 2, &aca_config);
 	
 	/* Enable all the analog comparator channels. */
 	ac_enable(&ACA, 0);
-	ac_enable(&ACA, 1);
+//	ac_enable(&ACA, 1);
+	//ac_enable(&ACA, 2);
 	
 	while(1) {
 		/* Do nothing. Everything is handPWM_TOPC by interrupts. */
