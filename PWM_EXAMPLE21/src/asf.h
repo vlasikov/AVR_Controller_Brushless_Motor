@@ -100,4 +100,6 @@
 // From module: XMEGA-A1 Xplained LED support enabled
 #include <led.h>
 
+//#include <motor.h>
+
 #endif // ASF_H
