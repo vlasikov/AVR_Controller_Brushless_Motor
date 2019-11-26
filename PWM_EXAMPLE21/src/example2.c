@@ -35,34 +35,12 @@
 #include <motor.h>
 #include <init.h>
 
-struct pwm_config pwm_botA;
-struct pwm_config pwm_botB;
-struct pwm_config pwm_botC;
 
-#define PWM_TOPA IOPORT_CREATE_PIN(PORTD, 0)
-#define PWM_TOPB IOPORT_CREATE_PIN(PORTD, 1)
-#define PWM_TOPC IOPORT_CREATE_PIN(PORTD, 2)
 
-volatile uint8_t duty_cycle_percent_topA = 0;
-volatile uint8_t duty_cycle_percent_topB = 0;
-volatile uint8_t duty_cycle_percent_botA = 0;
 
-volatile uint8_t step = 0;
-volatile uint8_t step_old = 0;
 
-#define PD3 IOPORT_CREATE_PIN(PORTD, 3)
-static uint8_t second = 0;
-static uint16_t tc_clksel_div = TC_CLKSEL_DIV8_gc;
-static uint16_t Top_tc_period = 15000;
-static const uint16_t Top_tc_period_min = 2000;
-static uint8_t MotorPower = 10;
-static uint8_t MotorPowerMax = 25;
-static uint8_t MotorStatus = 0;
 
-static uint16_t DelayC = 0;
-static uint16_t DelayCMax = 8;
 
-static uint16_t StepTime = 0;
 /**
  * \brief PWM channel 2 interrupt callback function
  */
@@ -85,9 +63,10 @@ int main( void )
 	ioport_set_pin_dir(PWM_TOPA, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_dir(PWM_TOPB, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_dir(PWM_TOPC, IOPORT_DIR_OUTPUT);
-	
+	tcc1_init();
 	ioport_set_pin_dir(IOPORT_CREATE_PIN(PORTD, 3), IOPORT_DIR_OUTPUT);
-	timerInit();
+	tcd1_init();
+	//timerInit();
 	
 	ioport_set_pin_dir(IOPORT_CREATE_PIN(PORTC, 3), IOPORT_DIR_OUTPUT);
 	ioport_set_pin_dir(IOPORT_CREATE_PIN(PORTC, 4), IOPORT_DIR_OUTPUT);

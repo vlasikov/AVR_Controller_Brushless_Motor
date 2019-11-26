@@ -9,9 +9,10 @@
 #include <motor.h>
 
 extern uint8_t MotorStatus;
+extern uint16_t Top_tc_period = 15000;
+
 static uint8_t second = 0;
 static uint16_t tc_clksel_div = TC_CLKSEL_DIV8_gc;
-static uint16_t Top_tc_period = 15000;
 static struct ac_config aca_config;
 
 void timerInit(){
@@ -22,7 +23,7 @@ void timerInit(){
 /*
  *
 */
-static void timerC1_tick(){	
+void timerC1_tick(){	
 	if (MotorStatus==0)	
 		MotorStop();
 		
@@ -45,7 +46,7 @@ void timerD1_tick(){
 			pwm_overflow_int_callback(&pwm_botA, pwm_callback_2);
 			break;
 		default:
-		break;
+			break;
 	}
 	
 	tc_write_clock_source(&TCC1, tc_clksel_div);
