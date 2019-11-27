@@ -36,14 +36,14 @@ void MotorNextPhase(){
 					MotorPower = 10;
 				}
 				if (Top_tc_period < 15000){
-					MotorPower = 15;
+					MotorPower = 16;
 				}
 				if (Top_tc_period < 10000){
-					MotorPower = 15;
+					//MotorPower = 15;
 				}
 				if (Top_tc_period < 5000){
-					//MotorPower = 22;
-					MotorStatus = 3;
+					MotorPower = 22;
+					MotorStatus = 2;
 				}
 			
 				tc_write_period(&TCC1, Top_tc_period);
