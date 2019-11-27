@@ -77,24 +77,6 @@
 #include <init.h>
 #include <motor.h>
 
-/*
-struct pwm_config pwm_botA;
-struct pwm_config pwm_botB;
-struct pwm_config pwm_botC;
-
-#define PWM_TOPA IOPORT_CREATE_PIN(PORTD, 0)
-#define PWM_TOPB IOPORT_CREATE_PIN(PORTD, 1)
-#define PWM_TOPC IOPORT_CREATE_PIN(PORTD, 2)
-
-volatile uint8_t duty_cycle_percent_topA = 0;
-volatile uint8_t duty_cycle_percent_topB = 0;
-volatile uint8_t duty_cycle_percent_botA = 0;
-
-volatile uint8_t step = 0;
-volatile uint8_t step_old = 0;
-
-*/
-
 
 /**
  * \brief Example 2 main application routine

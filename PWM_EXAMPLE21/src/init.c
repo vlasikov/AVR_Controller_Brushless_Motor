@@ -140,3 +140,20 @@ void acInit(){
  */
 void example_aca_interrupt_callback(AC_t *ac, uint8_t channel, enum ac_status_t status){	
 }
+
+void adcInit(){
+	/* значение смещения считанное из сигнатуры процессора */
+	ADCA.CAL=0xff;
+	/* беззнаковый режим, автоматический режим, 12-битный результат с правым выравниванием */
+	ADCA.CTRLB = ADC_RESOLUTION_12BIT_gc | 0x08;
+	/* разрешение работы бэндгап-элемента, внутреннее опорное напряжение 1В */
+	ADCA.REFCTRL = ADC_REFSEL_INT1V_gc | 0x02;
+	/* периферийная частота = clk/16 (2MHz/16)*/
+	ADCA.PRESCALER = ADC_PRESCALER_DIV16_gc;
+	/* канал 0 ADCA настроен на внешний несимметричных вход */
+	ADCA.CH0.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
+	/* Ножка 3 порта А настроена как положительный вход */
+	ADCA.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN3_gc;
+	/* Разрешение работы АЦП */
+	ADCA.CTRLA|=ADC_ENABLE_bm;
+}

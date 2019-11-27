@@ -2,7 +2,7 @@
  * motor.h
  *
  * Created: 25.11.2019 16:44:49
- *  Author: a.ashamanovskiy
+ *  Author: yu.vlasikov
  */ 
 
 
@@ -19,7 +19,6 @@ struct pwm_config pwm_botC;
 
 void MotorPhazeControl2();
 void MotorStop();
-//void MotorPhazeControl();
 void MotorNextPhase();
 
 
