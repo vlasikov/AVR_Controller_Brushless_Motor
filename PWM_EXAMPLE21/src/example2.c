@@ -74,6 +74,7 @@
  */
 
 #include <asf.h>
+#include <init.h>
 
 struct pwm_config pwm_botA;
 struct pwm_config pwm_botB;
@@ -111,7 +112,7 @@ static uint16_t Top_tc_period = 15000;
 static const uint16_t Top_tc_period_min = 2000;
 static uint8_t MotorPower = 10;
 static uint8_t MotorPowerMax = 25;
-static uint8_t MotorStatus = 0;
+extern uint8_t MotorStatus;
 
 static uint16_t DelayC = 0;
 static uint16_t DelayCMax = 8;
@@ -452,100 +453,6 @@ static void timerC1_tick(void){
 }
 
 
-void timerD1_tick(void){
-	ioport_toggle_pin_level(IOPORT_CREATE_PIN(PORTD, 3));
-	if (second < 100){
-		second++;
-	}
-	
-	switch(second){
-		case 1:
-			MotorStatus = 0;
-			break;			
-		case 2:
-			MotorStatus = 1;
-			pwm_overflow_int_callback(&pwm_botA, pwm_callback_2);
-			break;
-		default:
-		break;
-	}
-	
-	tc_write_clock_source(&TCC1, tc_clksel_div);
-}
-
-void tcc1_init(void)
-{
-	//Initialisation Timer TCC1
-	tc_enable(&TCC1);	
-	tc_set_overflow_interrupt_callback(&TCC1, timerC1_tick); //Cr?ation d'un callback qui sera execut? quand un overflow du timer sera d?clench?.
-	tc_set_wgm(&TCC1, TC_WG_NORMAL);		//Choix du mode du timer0, dans ce cas il comptera jusqu'? sa valeur "TOP" et retombera ? 0
-	tc_write_period(&TCC1, Top_tc_period);			//D?finition de la valeur "TOP"	
-	tc_set_overflow_interrupt_level(&TCC1, TC_INT_LVL_LO);	//Activation de l'interruption du timer 				
-	tc_write_clock_source(&TCC1, tc_clksel_div);		//Activation de l'horloge du timer 0
-}
-
-void tcd1_init(void)
-{
-	//Initialisation Timer TCD1
-	tc_enable(&TCD1);	
-	tc_set_overflow_interrupt_callback(&TCD1, timerD1_tick); //Cr?ation d'un callback qui sera execut? quand un overflow du timer sera d?clench?.
-	tc_set_wgm(&TCD1, TC_WG_NORMAL);		//Choix du mode du timer0, dans ce cas il comptera jusqu'? sa valeur "TOP" et retombera ? 0
-	tc_write_period(&TCD1, 30000);			//D?finition de la valeur "TOP"	
-	tc_set_overflow_interrupt_level(&TCD1, TC_INT_LVL_LO);	//Activation de l'interruption du timer 				
-	tc_write_clock_source(&TCD1, TC_CLKSEL_DIV1024_gc);		//Activation de l'horloge du timer 0
-}
-
-/**
- * \brief Analog comparator interrupt callback function
- *
- * This function is called when an interrupt has occurred on a channel in analog
- * comparator.
- *
- * \param ac Pointer to the analog comparator (AC) base address which caused
- *           the interrupt
- * \param channel The analog comparator channel that caused the interrupt
- * \param status Analog comparator window status given by a \ref ac_status_t
- *               value
- */
-static void example_aca_interrupt_callback(AC_t *ac, uint8_t channel,
-		enum ac_status_t status)
-{	
-/*			
-	if (step == 1){
-		if (ac_get_status(&ACA, 0))
-			ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 3), 1);
-		else
-			ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 3), 0);
-	}
-	
-	if (step == 4){
-		if (ac_get_status(&ACA, 0))
-			ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 4), 1);
-		else
-			ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 4), 0);
-	}
-	
-	/*
-	 * If trigger was caused by moving into above or below, switch to
-	 * trigger by being inside. If trigger was caused by moving inside the
-	 * window, switch to trigger on outside.
-	 */
-/*
-	if (status != AC_STATUS_INSIDE) {
-		ac_set_interrupt_mode(&aca_config, AC_INT_MODE_INSIDE_WINDOW);
-	} else {
-		ac_set_interrupt_mode(&aca_config, AC_INT_MODE_OUTSIDE_WINDOW);
-	}
-*/
-//	ac_disable(&ACA, 0);
-//	ac_disable(&ACA, 2);
-//	ac_disable(&ACA, 0);
-//	ac_write_config(&ACA, 0, &aca_config);
-//	ac_enable(&ACA, 0);
-//	ac_enable(&ACA, 1);
-
-//	example_ac_update_window_leds(status);
-}
 
 /**
  * \brief Example 2 main application routine
@@ -562,9 +469,10 @@ int main( void )
 	ioport_set_pin_dir(PWM_TOPA, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_dir(PWM_TOPB, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_dir(PWM_TOPC, IOPORT_DIR_OUTPUT);
-	tcc1_init();
+	//tcc1_init();
 	ioport_set_pin_dir(IOPORT_CREATE_PIN(PORTD, 3), IOPORT_DIR_OUTPUT);
-	tcd1_init();
+	//tcd1_init();
+	timerInit();
 	
 	ioport_set_pin_dir(IOPORT_CREATE_PIN(PORTC, 3), IOPORT_DIR_OUTPUT);
 	ioport_set_pin_dir(IOPORT_CREATE_PIN(PORTC, 4), IOPORT_DIR_OUTPUT);
@@ -587,7 +495,7 @@ int main( void )
 	pwm_start(&pwm_botB, 0);
 	pwm_start(&pwm_botC, 0);
 	
-	ac_set_interrupt_callback(&ACA, example_aca_interrupt_callback);
+	//ac_set_interrupt_callback(&ACA, example_aca_interrupt_callback);
 
 	/* Setup the analog comparator B in window mode. */
 	ac_set_mode(&aca_config, AC_MODE_SINGLE );
