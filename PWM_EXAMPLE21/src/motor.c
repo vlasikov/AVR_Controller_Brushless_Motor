@@ -8,7 +8,7 @@
 #include <motor.h>
 #include <asf.h>
 
-static struct ac_config aca_config;
+extern struct ac_config aca_config;
 static uint16_t step = 0;
 static uint8_t step_old = 0;
 static uint16_t DelayC = 0;
@@ -19,7 +19,7 @@ static uint8_t MotorPowerMax = 25;
 
 static uint16_t Top_tc_period = 15000;
 static const uint16_t Top_tc_period_min = 2000;
-/*
+
 void MotorNextPhase(){	
 	if (++step >= 6) {
 		step = 0;
@@ -312,4 +312,3 @@ void MotorStop(){
 	ioport_set_pin_level(PWM_TOPC, 1);
 	pwm_set_duty_cycle_percent(&pwm_botB, 0);
 }
-*/

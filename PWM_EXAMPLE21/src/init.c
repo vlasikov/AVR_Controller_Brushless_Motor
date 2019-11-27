@@ -13,7 +13,7 @@ extern uint16_t Top_tc_period = 15000;
 
 static uint8_t second = 0;
 static uint16_t tc_clksel_div = TC_CLKSEL_DIV8_gc;
-static struct ac_config aca_config;
+struct ac_config aca_config;
 
 void timerInit(){
 	tcc1_init();
@@ -28,10 +28,10 @@ void timerC1_tick(){
 		MotorStop();
 		
 	if (MotorStatus==1)	
-		MotorPhazeControl();
+		MotorNextPhase();
 		
 	if (MotorStatus==3)
-		MotorPhazeControl();
+		MotorNextPhase();
 		
 }
 
@@ -106,7 +106,7 @@ void pwm_callback_2 (){
 }
 
 void acInit(){
-	ac_set_interrupt_callback(&ACA, example_aca_interrupt_callback);
+//ac_set_interrupt_callback(&ACA, example_aca_interrupt_callback);
 
 	/* Setup the analog comparator B in window mode. */
 	ac_set_mode(&aca_config, AC_MODE_SINGLE );
