@@ -28,7 +28,10 @@ void timerC1_tick(){
 		MotorStop();
 		
 	if (MotorStatus==1)	
-		MotorPhazeControl();
+		MotorNextPhase();
+		
+	if (MotorStatus==3)
+		MotorNextPhase();
 }
 
 void timerD1_tick(){
@@ -96,7 +99,7 @@ void pwm_callback_1 (){
 }
 
 void pwm_callback_2 (){
-	if (MotorStatus <= 2){
+	if (MotorStatus <= 3){
 		MotorPhazeControl2();
 	}
 }

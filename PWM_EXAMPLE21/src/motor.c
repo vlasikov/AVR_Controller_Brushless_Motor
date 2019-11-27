@@ -9,8 +9,8 @@
 #include <asf.h>
 
 static struct ac_config aca_config;
-static uint16_t step = 0;
-static uint8_t step_old = 0;
+volatile uint16_t step = 0;
+volatile uint8_t step_old = 0;
 static uint16_t DelayC = 0;
 static uint16_t DelayCMax = 8;
 uint8_t MotorStatus = 0;
@@ -20,9 +20,7 @@ static uint8_t MotorPowerMax = 25;
 static uint16_t Top_tc_period = 15000;
 static const uint16_t Top_tc_period_min = 2000;
 
-void MotorPhazeControl(){
-	
-	
+void MotorNextPhase(){	
 	if (++step >= 6) {
 		step = 0;
 	}
@@ -44,8 +42,8 @@ void MotorPhazeControl(){
 					MotorPower = 15;
 				}
 				if (Top_tc_period < 5000){
-					MotorPower = 22;
-					MotorStatus = 2;
+					//MotorPower = 22;
+					MotorStatus = 3;
 				}
 			
 				tc_write_period(&TCC1, Top_tc_period);
@@ -150,7 +148,7 @@ void MotorPhazeControl2() {
 			if (!ac0Out){
 				if (DelayC > DelayCMax){
 					if (MotorStatus == 2){
-						MotorPhazeControl();
+						MotorNextPhase();
 						return;
 					}
 				}
@@ -178,7 +176,7 @@ void MotorPhazeControl2() {
 			if (ac0Out){
 				if (DelayC > DelayCMax){
 					if (MotorStatus == 2){
-						MotorPhazeControl();
+						MotorNextPhase();
 						return;
 					}
 				}
@@ -206,7 +204,7 @@ void MotorPhazeControl2() {
 			if (!ac0Out){
 				if (DelayC > DelayCMax){
 					if (MotorStatus == 2){
-						MotorPhazeControl();
+						MotorNextPhase();
 						return;
 					}
 				}
@@ -232,7 +230,7 @@ void MotorPhazeControl2() {
 			if (ac0Out){
 				if (DelayC > DelayCMax){
 					if (MotorStatus == 2){
-						MotorPhazeControl();
+						MotorNextPhase();
 						return;
 					}
 				}
@@ -260,7 +258,7 @@ void MotorPhazeControl2() {
 			if (!ac0Out){
 				if (DelayC > DelayCMax){
 					if (MotorStatus == 2){
-						MotorPhazeControl();
+						MotorNextPhase();
 						return;
 					}
 				}
@@ -288,7 +286,7 @@ void MotorPhazeControl2() {
 			if (ac0Out){
 				if (DelayC > DelayCMax){
 					if (MotorStatus == 2){
-						MotorPhazeControl();
+						MotorNextPhase();
 						return;
 					}
 				}
@@ -308,8 +306,7 @@ void MotorStop(){
 	ioport_set_pin_level(PWM_TOPA, 0);
 	pwm_set_duty_cycle_percent(&pwm_botA, 0);
 	
-	ioport_set_pin_level(PWM_TOPB, 0);
-	
+	ioport_set_pin_level(PWM_TOPB, 0);	
 	pwm_set_duty_cycle_percent(&pwm_botC, 0);
 	
 	ioport_set_pin_level(PWM_TOPC, 1);

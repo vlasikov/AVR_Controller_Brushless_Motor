@@ -19,7 +19,7 @@ struct pwm_config pwm_botC;
 
 void MotorPhazeControl2();
 void MotorStop();
-void MotorPhazeControl();
+void MotorNextPhase();
 
 
 #endif /* MOTOR_H_ */
