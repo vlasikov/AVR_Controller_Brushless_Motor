@@ -99,6 +99,8 @@ void pwmInit(){
 void pwm_callback_1 (){
 }
 
+volatile uint16_t rv_reg;
+volatile uint16_t counter = 0;
 void pwm_callback_2 (){
 	if (MotorStatus <= 3){
 		MotorPhazeControl2();
@@ -143,17 +145,93 @@ void example_aca_interrupt_callback(AC_t *ac, uint8_t channel, enum ac_status_t 
 
 void adcInit(){
 	/* значение смещения считанное из сигнатуры процессора */
-	ADCA.CAL=0xff;
+	ADCB.CAL=0xff;
 	/* беззнаковый режим, автоматический режим, 12-битный результат с правым выравниванием */
-	ADCA.CTRLB = ADC_RESOLUTION_12BIT_gc | 0x08;
+	ADCB.CTRLB = ADC_RESOLUTION_12BIT_gc | 0x08;
 	/* разрешение работы бэндгап-элемента, внутреннее опорное напряжение 1В */
-	ADCA.REFCTRL = ADC_REFSEL_INT1V_gc | 0x02;
+	ADCB.REFCTRL = ADC_REFSEL_INT1V_gc | 0x02;
 	/* периферийная частота = clk/16 (2MHz/16)*/
-	ADCA.PRESCALER = ADC_PRESCALER_DIV16_gc;
+	ADCB.PRESCALER = ADC_PRESCALER_DIV16_gc;
 	/* канал 0 ADCA настроен на внешний несимметричных вход */
-	ADCA.CH0.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
+	ADCB.CH0.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
 	/* Ножка 3 порта А настроена как положительный вход */
-	ADCA.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN3_gc;
+	ADCB.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN1_gc;  
+	
+	
+	
+	
+	ADCB.CALL = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCBCAL0) );
+	ADCB.CALH = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCBCAL1) );
+	ADCB.CTRLB = ADC_RESOLUTION_12BIT_gc;       // 12 bit conversion
+	ADCB.PRESCALER = ADC_PRESCALER_DIV256_gc;   // peripheral clk/256 (32MHz/256=125KHz)
+	ADCB.REFCTRL = ADC_REFSEL_INT1V_gc;         // internal 1V reference
+
+	ADCB.CH0.CTRL = ADC_CH_INPUTMODE_INTERNAL_gc | ADC_CH_GAIN_1X_gc;
+	ADCB.CH0.MUXCTRL = ADC_CH_MUXINT_TEMP_gc;
+											// Internal Temp Sensor
+	ADCB.CH1.CTRL = ADC_CH_INPUTMODE_INTERNAL_gc | ADC_CH_GAIN_1X_gc;
+	ADCB.CH1.MUXCTRL = ADC_CH_MUXINT_SCALEDVCC_gc;  // Internal VCC Sensor
+	
+	
+	
+	
 	/* Разрешение работы АЦП */
-	ADCA.CTRLA|=ADC_ENABLE_bm;
+	ADCB.CTRLA|=ADC_ENABLE_bm;  
+	
+	ADCB.CH0.CTRL |= ADC_CH_START_bm;
+}
+
+uint8_t ReadCalibrationByte( uint8_t index )
+{
+	uint8_t result;
+
+	/* Load the NVM Command register to read the calibration row. */
+	NVM_CMD = NVM_CMD_READ_CALIB_ROW_gc;
+	result = pgm_read_byte(index);
+
+	/* Clean up NVM Command register. */
+	NVM_CMD = NVM_CMD_NO_OPERATION_gc;
+
+	return( result );
+}
+
+
+#define VCC 3.3							// XXX lol
+#define VCCmV 3300 						// XXX lol
+#define VCCuV 3300000 						// XXX lol
+
+void int_adcb_init(void) {
+	
+	PORTB.DIR &= 0x0;					// set PB3 as input
+
+	ADCB.CTRLA |= 0x01;					// set bit one to enable adcb
+	ADCB.CTRLB |= ADC_RESOLUTION_12BIT_gc;			// set for 12 bit right adjusted mode
+	ADCB.REFCTRL |= ADC_REFSEL_VCC_gc;			// set aref to VCC / 1.6V
+	ADCB.PRESCALER = ADC_PRESCALER_DIV256_gc;			// clk/8
+
+	// set for single ended conv, 1X
+	ADCB.CH0.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
+
+	ADCB.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN1_gc;		// set the adc mux for PB3
+}
+
+
+int start_int_adcb_conv(void){
+
+	volatile int res, res_mv;
+
+	/* start a conv on what we earlier set as ch0 */
+	ADCB.CH0.CTRL |= ADC_CH_START_bm;
+
+	res = (ADCB.INTFLAGS & ADC_CH1IF_bm);
+	/* wait for conv to complete */
+	while(!(ADCB.INTFLAGS & ADC_CH1IF_bm));
+	
+	/* gcc will totally handle this read for us. */
+	res = ADCB.CH0RES;
+
+	/* the conversion theory: n * (AREF / 2**12) (only in mV to avoid floats) */
+	res_mv = (res * (VCCuV / 16) / 4096) / 100;
+
+	return res_mv;
 }

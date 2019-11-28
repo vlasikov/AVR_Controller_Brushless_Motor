@@ -81,6 +81,8 @@
 /**
  * \brief Example 2 main application routine
  */
+uint16_t rv_reg;
+
 int main( void )
 {
 	/* Initialize interrupt controller, board and sysclock */
@@ -89,7 +91,7 @@ int main( void )
 
 	/* Enable global interrupts */
 	cpu_irq_enable();
-	
+/*	
 	ioport_set_pin_dir(PWM_TOPA, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_dir(PWM_TOPB, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_dir(PWM_TOPC, IOPORT_DIR_OUTPUT);
@@ -103,12 +105,22 @@ int main( void )
 	ioport_set_pin_dir(IOPORT_CREATE_PIN(PORTC, 5), IOPORT_DIR_OUTPUT);
 
 	
-	pwmInit();
-	
+	pwmInit();	
 	acInit();
-	
+	//adcInit();
+*/	
+	int_adcb_init();
 	
 	while(1) {
 		/* Do nothing. Everything is handPWM_TOPC by interrupts. */
+		
+		start_int_adcb_conv();
+/*		
+		while(((ADCB.CH0.INTFLAGS & ADC_CH_CHIF_bm) == 0x00));
+		rv_reg = ADCB.CH0RES;
+		if(rv_reg>0){
+			rv_reg = 1;
+		}
+*/
 	}
 }

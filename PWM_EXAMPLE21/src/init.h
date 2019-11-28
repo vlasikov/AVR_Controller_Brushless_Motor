@@ -28,6 +28,10 @@ void acInit();
 static void example_aca_interrupt_callback(AC_t *ac, uint8_t channel, enum ac_status_t status);
 
 void adcInit();
+uint8_t ReadCalibrationByte( uint8_t index );
+
+void int_adcb_init(void);
+int start_int_adcb_conv(void);
 
 
 #endif /* INIT_H_ */
