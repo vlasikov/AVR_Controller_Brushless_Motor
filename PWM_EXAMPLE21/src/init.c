@@ -160,8 +160,8 @@ void adcInit(){
 	
 	
 	
-	ADCB.CALL = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCBCAL0) );
-	ADCB.CALH = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCBCAL1) );
+	//ADCB.CALL = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCBCAL0) );
+	//ADCB.CALH = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCBCAL1) );
 	ADCB.CTRLB = ADC_RESOLUTION_12BIT_gc;       // 12 bit conversion
 	ADCB.PRESCALER = ADC_PRESCALER_DIV256_gc;   // peripheral clk/256 (32MHz/256=125KHz)
 	ADCB.REFCTRL = ADC_REFSEL_INT1V_gc;         // internal 1V reference
@@ -204,7 +204,6 @@ void int_adcb_init(void) {
 	
 	PORTB.DIR &= 0x0;					// set PB3 as input
 
-	ADCB.CTRLA |= 0x01;					// set bit one to enable adcb
 	ADCB.CTRLB |= ADC_RESOLUTION_12BIT_gc;			// set for 12 bit right adjusted mode
 	ADCB.REFCTRL |= ADC_REFSEL_VCC_gc;			// set aref to VCC / 1.6V
 	ADCB.PRESCALER = ADC_PRESCALER_DIV256_gc;			// clk/8
@@ -213,6 +212,8 @@ void int_adcb_init(void) {
 	ADCB.CH0.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
 
 	ADCB.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN1_gc;		// set the adc mux for PB3
+	
+	ADCB.CTRLA |= 0x01;					// set bit one to enable adcb
 }
 
 
@@ -222,16 +223,162 @@ int start_int_adcb_conv(void){
 
 	/* start a conv on what we earlier set as ch0 */
 	ADCB.CH0.CTRL |= ADC_CH_START_bm;
-
-	res = (ADCB.INTFLAGS & ADC_CH1IF_bm);
+	
+	res = (ADCB.CH0.INTFLAGS);
 	/* wait for conv to complete */
-	while(!(ADCB.INTFLAGS & ADC_CH1IF_bm));
+	while(!(ADCB.CH0.INTFLAGS));
 	
 	/* gcc will totally handle this read for us. */
 	res = ADCB.CH0RES;
-
+	adc_clear_interrupt_flag(&ADCB, ADC_CH0);
+	
 	/* the conversion theory: n * (AREF / 2**12) (only in mV to avoid floats) */
 	res_mv = (res * (VCCuV / 16) / 4096) / 100;
 
 	return res_mv;
+}
+
+/**
+ * \brief Static variable to store total ADC Offset value for total number
+ *        of sample
+ */
+static int16_t adc_offset = 0;
+
+/* ! \brief Static variable to store offset for single sample */
+static int8_t adc_offset_one_sample = 0;
+
+/* ! \brief Static variable to keep number of samples for oversampling */
+static volatile uint16_t adc_samplecount = 0;
+
+/**
+ * \brief Global variable/flag to indicate that one set of
+ *         oversampling is done for start processing
+ */
+volatile bool adc_oversampled_flag = false;
+
+/* ! \brief Static variable to to store single sampled ADC result */
+static volatile int64_t adc_result_one_sample = 0;
+
+/* ! \brief Static variable to keep ADC configuration parameters */
+static struct adc_config adc_conf;
+
+/* ! \brief Static variable to keep ADC channel configuration parameters */
+static struct adc_channel_config adc_ch_conf;
+
+
+/**
+ * \brief This function initialize the ADCB,gets ADCB-CH0 offset and configure
+ *        ADCB-CH0 for oversampling
+ *  - ADCB-CH0 is configured in 12bit, signed differential mode without gain
+ *  - To read ADC offset, ADCB-Pin3(PB3) used as both +ve and -ve input
+ *  - After reading ADC offset,to start oversampling,ADCB +ve and -ve input
+ *    are configured
+ */
+void init_adc(void)
+{
+	/* Initialize configuration structures */
+	adc_read_configuration(&ADCB, &adc_conf);
+	adcch_read_configuration(&ADCB, ADC_CH0, &adc_ch_conf);
+
+	/* Configure the ADCB module:
+	 * - Signed, 12-bit resolution
+	 * - External reference on AREFB pin.
+	 * - 250 KSPS ADC clock rate
+	 * - Manual conversion triggering
+	 * - Callback function
+	 */
+	adc_set_conversion_parameters(&adc_conf, ADC_SIGN_ON, ADC_RES_12,
+			ADC_REF_AREFB);
+	adc_set_clock_rate(&adc_conf, 250000UL);
+	adc_set_conversion_trigger(&adc_conf, ADC_TRIG_MANUAL, 1, 0);
+	adc_write_configuration(&ADCB, &adc_conf);
+	adc_set_callback(&ADCB, &adc_handler);
+
+	/* Configure ADC B channel 0 for offset calculation
+	 * - Differential mode without gain
+	 * - Selected Pin3 (PB3) as +ve and -ve input for offset calculation
+	 */
+	adcch_set_input(&adc_ch_conf, ADCCH_POS_PIN3, ADCCH_NEG_PIN3, 1);
+	adcch_write_configuration(&ADCB, ADC_CH0, &adc_ch_conf);
+
+	/* Enable ADCB */
+	adc_enable(&ADCB);
+
+	/* Get ADC offset in to ADC_Offset variable and disable ADC */
+//	adc_offset_one_sample = adc_offset_get_signed();
+
+	/* Find ADC_Offset for for total number of samples */
+//	adc_offset = adc_offset_one_sample * ADC_OVER_SAMPLED_NUMBER;
+
+	/* Disable ADC to configure for oversampling */
+	adc_disable(&ADCB);
+
+	/* Configure the ADCB module for oversampling:
+	 * - Signed, 12-bit resolution
+	 * - External reference on AREFB pin.
+	 * - 250 KSPS ADC clock rate
+	 * - Free running mode on Channel0 ( First Channel)
+	 */
+
+	adc_set_conversion_trigger(&adc_conf, ADC_TRIG_FREERUN_SWEEP, 1, 0);
+	adc_write_configuration(&ADCB, &adc_conf);
+
+	/* Configure ADC B channel 0 for oversampling input
+	 * - Differential mode without gain
+	 * - Selected Pin1 (PB1) as +ve and Pin2 (PB2) as-ve input
+	 * - Conversion complete interrupt
+	 */
+	adcch_set_input(&adc_ch_conf, ADC_OVER_SAMP_POSTIVE_PIN,
+			ADC_OVER_SAMP_NEGATIVE_PIN, 1);
+	adcch_set_interrupt_mode(&adc_ch_conf, ADCCH_MODE_COMPLETE);
+	adcch_enable_interrupt(&adc_ch_conf);
+	adcch_write_configuration(&ADCB, ADC_CH0, &adc_ch_conf);
+
+	/* Enable ADCB */
+	adc_enable(&ADCB);
+}
+
+/**
+ * \brief Callback function for ADCB-CH0 interrupts
+ *  - Interrupt is configured for Conversion Complete Interrupt
+ *  - ADCA CH0 result is accumulated
+ *  - ADC sample count is incremented
+ *  - Check If ADC sample count reached up to number of oversampling required
+ *  - If so, disable ADC interrupt and set flag to start oversampling process
+ *
+ * \param adc Pointer to ADC module.
+ * \param ch_mask ADC channel mask.
+ * \param result Conversion result from ADC channel.
+ */
+static void adc_handler(ADC_t *adc, uint8_t ch_mask, adc_result_t result)
+{
+	/*  Get Result from ADCB-CH0 Register and Accumulate */
+	adc_result_accumulator +=  result;
+
+	/* Increment sample count */
+	adc_samplecount++;
+
+	/* Check if sample count has reached oversample count */
+	if (adc_samplecount >= ADC_OVER_SAMPLED_NUMBER) {
+		/* Disable ADCB-CHO conversion complete interrupt until stored
+		 * samples are processed
+		 */
+		adcch_disable_interrupt(&adc_ch_conf);
+		adcch_write_configuration(&ADCB, ADC_CH0, &adc_ch_conf);
+
+		/* Clear any pending interrupt request by clearing interrupt
+		 * flag
+		 */
+		adc_clear_interrupt_flag(&ADCB, ADC_CH0);
+
+		/*Set adc_oversampled_flag to start oversampling process from
+		 * main function
+		 */
+		adc_oversampled_flag = true;
+
+		/* Store single sample ADC result to find analog input without
+		 * oversampling
+		 */
+		adc_result_one_sample = result;
+	}
 }

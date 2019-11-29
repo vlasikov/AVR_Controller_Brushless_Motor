@@ -11,6 +11,9 @@
 
 #include <asf.h>
 
+#define 	ADC_OVER_SAMP_POSTIVE_PIN   ADCCH_POS_PIN1
+#define 	ADC_OVER_SAMP_NEGATIVE_PIN   ADCCH_NEG_PIN2
+
 void timerInit();
 /*
  *
@@ -31,6 +34,8 @@ void adcInit();
 uint8_t ReadCalibrationByte( uint8_t index );
 
 void int_adcb_init(void);
+void init_adc(void);
+static void adc_handler(ADC_t *adc, uint8_t ch_mask, adc_result_t result);
 int start_int_adcb_conv(void);
 
 

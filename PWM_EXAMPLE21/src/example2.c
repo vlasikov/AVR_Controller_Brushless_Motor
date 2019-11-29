@@ -73,10 +73,11 @@
  * Support and FAQ: visit <a href="https://www.microchip.com/support/">Microchip Support</a>
  */
 
+
+
 #include <asf.h>
 #include <init.h>
 #include <motor.h>
-
 
 /**
  * \brief Example 2 main application routine
@@ -88,9 +89,6 @@ int main( void )
 	/* Initialize interrupt controller, board and sysclock */
 	pmic_init();
 	sysclk_init();
-
-	/* Enable global interrupts */
-	cpu_irq_enable();
 /*	
 	ioport_set_pin_dir(PWM_TOPA, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_dir(PWM_TOPB, IOPORT_DIR_OUTPUT);
@@ -110,6 +108,11 @@ int main( void )
 	//adcInit();
 */	
 	int_adcb_init();
+
+//	init_adc();
+	
+	/* Enable global interrupts */
+	cpu_irq_enable();
 	
 	while(1) {
 		/* Do nothing. Everything is handPWM_TOPC by interrupts. */

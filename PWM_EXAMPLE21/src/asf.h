@@ -55,6 +55,9 @@
 // From module: AC - Analog Comparator
 #include <ac.h>
 
+// From module: ADC - XMEGA A/AU Implementation
+#include <adc.h>
+
 // From module: CPU specific features
 #include <ccp.h>
 #include <xmega_reset_cause.h>
@@ -70,6 +73,9 @@
 
 // From module: Interrupt management - XMEGA implementation
 #include <interrupt.h>
+
+// From module: NVM - Non Volatile Memory
+#include <nvm.h>
 
 // From module: PMIC - Programmable Multi-level Interrupt Controller
 #include <pmic.h>
