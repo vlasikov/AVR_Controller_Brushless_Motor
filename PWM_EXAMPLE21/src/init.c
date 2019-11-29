@@ -7,6 +7,7 @@
 
 #include <init.h>
 #include <motor.h>
+#include <conf_oversampling.h>
 
 extern uint8_t MotorStatus;
 extern uint16_t Top_tc_period = 15000;
@@ -244,6 +245,9 @@ int start_int_adcb_conv(void){
  */
 static int16_t adc_offset = 0;
 
+/* ! \brief Static variable to accumulate sampled ADC result */
+static volatile int64_t adc_result_accumulator = 0;
+
 /* ! \brief Static variable to store offset for single sample */
 static int8_t adc_offset_one_sample = 0;
 
@@ -258,6 +262,7 @@ volatile bool adc_oversampled_flag = false;
 
 /* ! \brief Static variable to to store single sampled ADC result */
 static volatile int64_t adc_result_one_sample = 0;
+static volatile int64_t adc_result_one_sample_old = 0;
 
 /* ! \brief Static variable to keep ADC configuration parameters */
 static struct adc_config adc_conf;
@@ -287,8 +292,7 @@ void init_adc(void)
 	 * - Manual conversion triggering
 	 * - Callback function
 	 */
-	adc_set_conversion_parameters(&adc_conf, ADC_SIGN_ON, ADC_RES_12,
-			ADC_REF_AREFB);
+	adc_set_conversion_parameters(&adc_conf, ADC_SIGN_ON, ADC_RES_12, ADC_REF_VCCDIV2);
 	adc_set_clock_rate(&adc_conf, 250000UL);
 	adc_set_conversion_trigger(&adc_conf, ADC_TRIG_MANUAL, 1, 0);
 	adc_write_configuration(&ADCB, &adc_conf);
@@ -298,7 +302,8 @@ void init_adc(void)
 	 * - Differential mode without gain
 	 * - Selected Pin3 (PB3) as +ve and -ve input for offset calculation
 	 */
-	adcch_set_input(&adc_ch_conf, ADCCH_POS_PIN3, ADCCH_NEG_PIN3, 1);
+//	adcch_set_input(&adc_ch_conf, ADCCH_POS_PIN3, ADCCH_NEG_PIN3, 1);
+	adcch_set_input(&adc_ch_conf, ADCCH_POS_PIN1, ADCCH_NEG_PAD_GND, 0);	// gain 0.5
 	adcch_write_configuration(&ADCB, ADC_CH0, &adc_ch_conf);
 
 	/* Enable ADCB */
@@ -328,8 +333,7 @@ void init_adc(void)
 	 * - Selected Pin1 (PB1) as +ve and Pin2 (PB2) as-ve input
 	 * - Conversion complete interrupt
 	 */
-	adcch_set_input(&adc_ch_conf, ADC_OVER_SAMP_POSTIVE_PIN,
-			ADC_OVER_SAMP_NEGATIVE_PIN, 1);
+	adcch_set_input(&adc_ch_conf, ADC_OVER_SAMP_POSTIVE_PIN, ADC_OVER_SAMP_NEGATIVE_PIN, 1);
 	adcch_set_interrupt_mode(&adc_ch_conf, ADCCH_MODE_COMPLETE);
 	adcch_enable_interrupt(&adc_ch_conf);
 	adcch_write_configuration(&ADCB, ADC_CH0, &adc_ch_conf);
@@ -363,7 +367,7 @@ static void adc_handler(ADC_t *adc, uint8_t ch_mask, adc_result_t result)
 		/* Disable ADCB-CHO conversion complete interrupt until stored
 		 * samples are processed
 		 */
-		adcch_disable_interrupt(&adc_ch_conf);
+//		adcch_disable_interrupt(&adc_ch_conf);
 		adcch_write_configuration(&ADCB, ADC_CH0, &adc_ch_conf);
 
 		/* Clear any pending interrupt request by clearing interrupt
@@ -380,5 +384,33 @@ static void adc_handler(ADC_t *adc, uint8_t ch_mask, adc_result_t result)
 		 * oversampling
 		 */
 		adc_result_one_sample = result;
+		
+		adc_samplecount = 0;
+		adc_result_accumulator = 0;
 	}
+}
+
+/**
+ * \brief This function get the offset of the ADCB when it is configured
+ *	      in signed mode
+ *  \note The ADC must be configured and enabled before this function is run.
+ * \return Offset on the ADCB
+ */
+static int8_t adc_offset_get_signed(void)
+{
+	int16_t offset = 0;
+	uint8_t i;
+
+	/* Sum four samples */
+	for (i = 0; i < 4; i++) {
+		/* Do one conversion to find offset */
+		adc_start_conversion(&ADCB, ADC_CH0);
+		adc_wait_for_interrupt_flag(&ADCB, ADC_CH0);
+
+		/* Accumulate conversion results */
+		offset += adc_get_result(&ADCB, ADC_CH0);
+	}
+
+	/* Return mean value */
+	return ((int8_t)(offset / 4));
 }

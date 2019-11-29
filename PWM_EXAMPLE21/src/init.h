@@ -36,6 +36,9 @@ uint8_t ReadCalibrationByte( uint8_t index );
 void int_adcb_init(void);
 void init_adc(void);
 static void adc_handler(ADC_t *adc, uint8_t ch_mask, adc_result_t result);
+static int8_t adc_offset_get_signed(void);
+
+
 int start_int_adcb_conv(void);
 
 
