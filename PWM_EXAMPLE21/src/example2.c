@@ -89,7 +89,7 @@ int main( void )
 	/* Initialize interrupt controller, board and sysclock */
 	pmic_init();
 	sysclk_init();
-/*	
+//
 	ioport_set_pin_dir(PWM_TOPA, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_dir(PWM_TOPB, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_dir(PWM_TOPC, IOPORT_DIR_OUTPUT);
@@ -106,7 +106,7 @@ int main( void )
 	pwmInit();	
 	acInit();
 	//adcInit();
-*/	
+//	
 //	int_adcb_init();
 	
 	init_adc();

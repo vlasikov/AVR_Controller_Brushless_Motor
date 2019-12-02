@@ -354,6 +354,8 @@ void init_adc(void)
  * \param ch_mask ADC channel mask.
  * \param result Conversion result from ADC channel.
  */
+
+uint16_t ADC = 0;
 static void adc_handler(ADC_t *adc, uint8_t ch_mask, adc_result_t result)
 {
 	/*  Get Result from ADCB-CH0 Register and Accumulate */
@@ -384,6 +386,7 @@ static void adc_handler(ADC_t *adc, uint8_t ch_mask, adc_result_t result)
 		 * oversampling
 		 */
 		adc_result_one_sample = result;
+		ADC = 1.5;//adc_result_accumulator >> 8;
 		
 		adc_samplecount = 0;
 		adc_result_accumulator = 0;

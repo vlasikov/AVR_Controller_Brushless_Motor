@@ -20,6 +20,8 @@ static uint8_t MotorPowerMax = 25;
 static uint16_t Top_tc_period = 15000;
 static const uint16_t Top_tc_period_min = 2000;
 
+extern uint16_t ADC;
+
 void MotorNextPhase(){	
 	if (++step >= 6) {
 		step = 0;
@@ -31,6 +33,12 @@ void MotorNextPhase(){
 				if (MotorStatus == 1){
 					Top_tc_period *= 0.99;
 				}
+				/*
+				else if (MotorStatus == 2) {
+					MotorPower = 22 + ADC/1000.0;
+				}
+				*/
+				
 			
 				if (Top_tc_period < 30000){
 					MotorPower = 10;
