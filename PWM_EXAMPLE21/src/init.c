@@ -386,7 +386,7 @@ static void adc_handler(ADC_t *adc, uint8_t ch_mask, adc_result_t result)
 		 * oversampling
 		 */
 		adc_result_one_sample = result;
-		ADC = 1.5;//adc_result_accumulator >> 8;
+		ADC = adc_result_accumulator >> 18;  // acc/256/1024
 		
 		adc_samplecount = 0;
 		adc_result_accumulator = 0;

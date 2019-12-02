@@ -28,17 +28,11 @@ void MotorNextPhase(){
 	}
 	
 	switch (step){
-		case 0:
+		case 0:		
 			if (Top_tc_period > Top_tc_period_min) {
 				if (MotorStatus == 1){
 					Top_tc_period *= 0.99;
-				}
-				/*
-				else if (MotorStatus == 2) {
-					MotorPower = 22 + ADC/1000.0;
-				}
-				*/
-				
+				}			
 			
 				if (Top_tc_period < 30000){
 					MotorPower = 10;
@@ -54,6 +48,10 @@ void MotorNextPhase(){
 					MotorStatus = 2;
 				}
 			
+				if (MotorStatus == 2) {
+					MotorPower = 22.0 * (1.0 + ADC/100.0);
+					//MotorPower = 21;
+				}
 				tc_write_period(&TCC1, Top_tc_period);
 			}
 		
