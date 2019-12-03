@@ -389,8 +389,8 @@ static void adc_handler(ADC_t *adc, uint8_t ch_mask, adc_result_t result)
 		 */
 		adc_result_one_sample = result;
 		//adc_result_accumulator = 0;
-		//ADC = result;//adc_result_accumulator >> 8;  // acc/256/1024
-		ADC = 3000;
+		ADC = result;//adc_result_accumulator >> 8;  // acc/256/1024
+		//ADC = 3000;
 //		ADC = result;
 // 		if (result >= 0){
 // 			unsignedADC = result + 0x;

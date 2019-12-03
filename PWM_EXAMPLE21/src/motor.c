@@ -12,10 +12,10 @@ extern struct ac_config aca_config;
 static uint16_t step = 0;
 static uint8_t step_old = 0;
 static uint16_t DelayC = 0;
-static uint16_t DelayCMax = 4;
+static uint16_t DelayCMax = 2; // 4 для 3000
 uint8_t MotorStatus = 0;
 static uint8_t MotorPower = 10;
-static uint8_t MotorPowerMax = 25;
+//static uint8_t MotorPowerMax = 25;
 
 static uint16_t Top_tc_period = 15000;
 static const uint16_t Top_tc_period_min = 2000;
@@ -49,7 +49,15 @@ void MotorNextPhase(){
 				}
 			
 				if (MotorStatus == 2) {
-					MotorPower = 22.0 * (1.0 + (ADC - 2500)/1000.0);
+					if (ADC < 2000) {
+						ADC = 2000;
+					}
+					if (ADC > 3000) {
+						ADC = 3000;
+					}
+					
+					MotorPower = 23.0 * (1.0 + (ADC - 2500)/1500.0); // от 15 до 30 хватит 23*1.3
+					//MotorPower = 30;
 					//MotorPower = 21;
 				}
 				tc_write_period(&TCC1, Top_tc_period);
