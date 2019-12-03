@@ -292,7 +292,8 @@ void init_adc(void)
 	 * - Manual conversion triggering
 	 * - Callback function
 	 */
-	adc_set_conversion_parameters(&adc_conf, ADC_SIGN_ON, ADC_RES_12, ADC_REF_VCCDIV2);
+	//adc_set_conversion_parameters(&adc_conf, ADC_SIGN_ON, ADC_RES_12, ADC_REF_VCCDIV2);
+	adc_set_conversion_parameters(&adc_conf, ADC_SIGN_OFF, ADC_RES_12, ADC_REF_VCCDIV2);
 	adc_set_clock_rate(&adc_conf, 250000UL);
 	adc_set_conversion_trigger(&adc_conf, ADC_TRIG_MANUAL, 1, 0);
 	adc_write_configuration(&ADCB, &adc_conf);
@@ -356,6 +357,7 @@ void init_adc(void)
  */
 
 uint16_t ADC = 0;
+uint16_t unsignedADC = 0;
 static void adc_handler(ADC_t *adc, uint8_t ch_mask, adc_result_t result)
 {
 	/*  Get Result from ADCB-CH0 Register and Accumulate */
@@ -386,7 +388,15 @@ static void adc_handler(ADC_t *adc, uint8_t ch_mask, adc_result_t result)
 		 * oversampling
 		 */
 		adc_result_one_sample = result;
-		ADC = adc_result_accumulator >> 18;  // acc/256/1024
+		//adc_result_accumulator = 0;
+		//ADC = result;//adc_result_accumulator >> 8;  // acc/256/1024
+		ADC = 3000;
+//		ADC = result;
+// 		if (result >= 0){
+// 			unsignedADC = result + 0x;
+// 		}else{
+// 			unsignedADC = 
+// 		}
 		
 		adc_samplecount = 0;
 		adc_result_accumulator = 0;
