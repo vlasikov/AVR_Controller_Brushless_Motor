@@ -10,7 +10,7 @@
 #include <conf_oversampling.h>
 
 extern uint8_t MotorStatus;
-extern uint16_t Top_tc_period = 15000;
+extern uint16_t Top_tc_period;
 
 static uint8_t second = 0;
 static uint16_t tc_clksel_div = TC_CLKSEL_DIV8_gc;
@@ -117,12 +117,9 @@ void acInit(){
 	ac_set_hysteresis(&aca_config, AC_HYSMODE_LARGE_gc);
 	ac_set_positive_reference(&aca_config, AC_MUXPOS_PIN0_gc);
 	ac_set_negative_reference(&aca_config, AC_MUXNEG_PIN5_gc);
-	ac_set_interrupt_mode(&aca_config, AC_INT_MODE_BOTH_EDGES);	// по обоим фронтам
-	ac_set_interrupt_level(&aca_config, AC_INT_LVL_MED);
+//	ac_set_interrupt_mode(&aca_config, AC_INT_MODE_BOTH_EDGES);	// по обоим фронтам
+//	ac_set_interrupt_level(&aca_config, AC_INT_LVL_MED);
 //	ac_set_high_speed_mode(&aca_config);
-	
-//	ACA.CTRLA |= AC_AC0OUT_bm;
-//	PORTA.DIR |= PIN7_bm;
 	
 	/*
 	 * Write configuration of analog comparator B channel 0, half of window
@@ -130,12 +127,8 @@ void acInit(){
 	 */
 	ac_write_config(&ACA, 0, &aca_config);
 	
-//	ac_set_positive_reference(&aca_config, AC_MUXPOS_PIN1_gc);
-//	ac_write_config(&ACA, 1, &aca_config);
-	
 	/* Enable all the analog comparator channels. */
 	ac_enable(&ACA, 0);
-//	ac_enable(&ACA, 1);
 }
 
 /**
@@ -156,10 +149,7 @@ void adcInit(){
 	/* канал 0 ADCA настроен на внешний несимметричных вход */
 	ADCB.CH0.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
 	/* Ножка 3 порта А настроена как положительный вход */
-	ADCB.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN1_gc;  
-	
-	
-	
+	ADCB.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN1_gc;  	
 	
 	//ADCB.CALL = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCBCAL0) );
 	//ADCB.CALH = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCBCAL1) );
