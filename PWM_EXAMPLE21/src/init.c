@@ -36,6 +36,11 @@ void timerC1_tick(){
 		
 }
 
+/*
+ * Прерывания таймера. Период 1с.
+ * При срабатывании инвертируется пин PD3
+ */
+
 void timerD1_tick(){
 	ioport_toggle_pin_level(IOPORT_CREATE_PIN(PORTD, 3));
 	if (second < 10){

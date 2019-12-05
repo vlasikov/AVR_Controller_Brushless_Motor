@@ -14,7 +14,7 @@ static uint8_t step_old = 0;
 static uint16_t DelyayForMotor = 0;
 static uint16_t DelyayForMotorMax = 2;
 uint8_t MotorStatus = 0;
-static uint8_t MotorPower = 10;
+static uint8_t MotorPower = 16;
 
 uint16_t Top_tc_period = 15000;
 
@@ -34,9 +34,9 @@ void MotorNextPhase(){
 				Top_tc_period *= 0.95;
 			}		
 			
-			if (Top_tc_period < 15000){
-				MotorPower = 16;
-			}
+// 			if (Top_tc_period < 15000){
+// 				MotorPower = 16;
+// 			}
 			
 			if (Top_tc_period < 5000){
 				MotorPower = 22;
@@ -128,8 +128,10 @@ void MotorNextPhase(){
 
 /*
  * ‘ункици€ провер€ет положение двигател€ и задает новый угол повората в рабочем режиме (не при разгоне)
+ * частота вызова статична 25 к√ц
  * выводит на пины PC3, 4, 5 знак фаз A, B, C. соответственно.
  */
+static uint16_t counter = 0; // счетчик оборотов двигател€. такстируетс€ 25 к√ц
 
 void MotorPhazeControl2() {
 	uint8_t ac0Out;
@@ -139,15 +141,22 @@ void MotorPhazeControl2() {
 	else{
 		ac0Out = 1;
 	}
+	
+	if (counter > 2500){
+		MotorStop();
+	}
+	counter ++;
 	switch (step){
 		case 0:
-			if (step_old != step) {
-				ac_disable(&ACA, 0);
+			if (step_old != step) {												// если фаза управлени€ помен€лась
+				ac_disable(&ACA, 0);											// переключаем компаратор к следующему пину
 				ac_set_positive_reference(&aca_config, AC_MUXPOS_PIN0_gc);		// phase C
-				ac_write_config(&ACA, 0, &aca_config);
-				ac_enable(&ACA, 0);
+				ac_write_config(&ACA, 0, &aca_config);							// 
+				ac_enable(&ACA, 0);												// 
 			
 				DelyayForMotor = 0;
+				
+				counter = 0;													// обнул€ем врем€ просто€ двигател€
 			}
 		
 			if (ac0Out)															// phase C
@@ -312,6 +321,10 @@ void MotorPhazeControl2() {
 	step_old = step;
 }
 
+/*
+ * ќстановка двигател€
+ */
+
 void MotorStop(){
 	ioport_set_pin_level(PWM_TOPA, 0);
 	pwm_set_duty_cycle_percent(&pwm_botA, 0);
@@ -321,4 +334,6 @@ void MotorStop(){
 	
 	ioport_set_pin_level(PWM_TOPC, 1);
 	pwm_set_duty_cycle_percent(&pwm_botB, 0);
+	
+	MotorStatus = 0;
 }
