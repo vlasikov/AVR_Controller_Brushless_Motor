@@ -104,11 +104,7 @@ int main( void )
 
 	
 	pwmInit();	
-	acInit();
-	//adcInit();
-//	
-//	int_adcb_init();
-	
+	acInit();	
 	init_adc();
 	
 	/* Enable global interrupts */
@@ -116,14 +112,5 @@ int main( void )
 	
 	while(1) {
 		/* Do nothing. Everything is handPWM_TOPC by interrupts. */
-		
-//		start_int_adcb_conv();
-/*		
-		while(((ADCB.CH0.INTFLAGS & ADC_CH_CHIF_bm) == 0x00));
-		rv_reg = ADCB.CH0RES;
-		if(rv_reg>0){
-			rv_reg = 1;
-		}
-*/
 	}
 }

@@ -11,55 +11,49 @@
 extern struct ac_config aca_config;
 static uint16_t step = 0;
 static uint8_t step_old = 0;
-static uint16_t DelayC = 0;
-static uint16_t DelayCMax = 2;
+static uint16_t DelyayForMotor = 0;
+static uint16_t DelyayForMotorMax = 2;
 uint8_t MotorStatus = 0;
 static uint8_t MotorPower = 10;
-//static uint8_t MotorPowerMax = 25;
 
 uint16_t Top_tc_period = 15000;
-static const uint16_t Top_tc_period_min = 2000;
 
 extern uint16_t ADC;
 
+/*
+ * Смещение фазы управления на 60 градусов
+ */
 void MotorNextPhase(){	
 	if (++step >= 6) {
 		step = 0;
 	}
 	
 	switch (step){
-		case 0:		
-			if (Top_tc_period > Top_tc_period_min) {
-				if (MotorStatus == 1){
-					Top_tc_period *= 0.99;
-				}			
+		case 0:
+			if (MotorStatus == 1){
+				Top_tc_period *= 0.95;
+			}		
 			
-				if (Top_tc_period < 30000){
-					MotorPower = 10;
-				}
-				if (Top_tc_period < 15000){
-					MotorPower = 16;
-				}
-				if (Top_tc_period < 10000){
-					//MotorPower = 15;
-				}
-				if (Top_tc_period < 5000){
-					MotorPower = 22;
-					MotorStatus = 2;
-				}
-			
-				if (MotorStatus == 2) {
-					if (ADC < 2000) {
-						ADC = 2000;
-					}
-					if (ADC > 3000) {
-						ADC = 3000;
-					}
-					
-					MotorPower = 23.0 * (1.0 + (ADC - 2500)/1500.0); // от 15 до 30 хватит 23*1.3
-				}
-				tc_write_period(&TCC1, Top_tc_period);
+			if (Top_tc_period < 15000){
+				MotorPower = 16;
 			}
+			
+			if (Top_tc_period < 5000){
+				MotorPower = 22;
+				MotorStatus = 2;
+			}
+			
+			if (MotorStatus == 2) {
+				if (ADC < 2000) {
+					ADC = 2000;
+				}
+				if (ADC > 3000) {
+					ADC = 3000;
+				}
+					
+				MotorPower = 23.0 * (1.0 + (ADC - 2500)/1500.0); // от 15 до 30 хватит 23*1.3
+			}
+			tc_write_period(&TCC1, Top_tc_period);
 		
 			pwm_set_duty_cycle_percent(&pwm_botA, 0);
 		
@@ -132,6 +126,10 @@ void MotorNextPhase(){
 	}
 }
 
+/*
+ * Функиция проверяет положение двигателя и задает новый угол повората в рабочем режиме (не при разгоне)
+ * выводит на пины PC3, 4, 5 знак фаз A, B, C. соответственно.
+ */
 
 void MotorPhazeControl2() {
 	uint8_t ac0Out;
@@ -149,7 +147,7 @@ void MotorPhazeControl2() {
 				ac_write_config(&ACA, 0, &aca_config);
 				ac_enable(&ACA, 0);
 			
-				DelayC = 0;
+				DelyayForMotor = 0;
 			}
 		
 			if (ac0Out)															// phase C
@@ -158,16 +156,16 @@ void MotorPhazeControl2() {
 				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 5), 0);
 		
 			if (!ac0Out){
-				if (DelayC > DelayCMax){
+				if (DelyayForMotor > DelyayForMotorMax){
 					if (MotorStatus == 2){
 						MotorNextPhase();
 						return;
 					}
 				}
-				DelayC++;
+				DelyayForMotor++;
 			}
 			else{
-				DelayC = 0;
+				DelyayForMotor = 0;
 			}
 			break;
 		case 1:
@@ -177,7 +175,7 @@ void MotorPhazeControl2() {
 				ac_write_config(&ACA, 0, &aca_config);
 				ac_enable(&ACA, 0);
 			
-				DelayC = 0;
+				DelyayForMotor = 0;
 			}
 		
 			if (ac0Out)															// phase B
@@ -186,16 +184,16 @@ void MotorPhazeControl2() {
 				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 4), 0);
 		
 			if (ac0Out){
-				if (DelayC > DelayCMax){
+				if (DelyayForMotor > DelyayForMotorMax){
 					if (MotorStatus == 2){
 						MotorNextPhase();
 						return;
 					}
 				}
-				DelayC++;
+				DelyayForMotor++;
 			}
 			else{
-				DelayC = 0;
+				DelyayForMotor = 0;
 			}
 			break;
 		case 2:
@@ -205,7 +203,7 @@ void MotorPhazeControl2() {
 				ac_write_config(&ACA, 0, &aca_config);
 				ac_enable(&ACA, 0);
 			
-				DelayC = 0;
+				DelyayForMotor = 0;
 			}
 		
 			if (ac0Out)															// phase A
@@ -214,16 +212,16 @@ void MotorPhazeControl2() {
 				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 3), 0);
 		
 			if (!ac0Out){
-				if (DelayC > DelayCMax){
+				if (DelyayForMotor > DelyayForMotorMax){
 					if (MotorStatus == 2){
 						MotorNextPhase();
 						return;
 					}
 				}
-				DelayC++;
+				DelyayForMotor++;
 			}
 			else{
-				DelayC = 0;
+				DelyayForMotor = 0;
 			}
 			break;
 		case 3:
@@ -240,16 +238,16 @@ void MotorPhazeControl2() {
 				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 5), 0);
 		
 			if (ac0Out){
-				if (DelayC > DelayCMax){
+				if (DelyayForMotor > DelyayForMotorMax){
 					if (MotorStatus == 2){
 						MotorNextPhase();
 						return;
 					}
 				}
-				DelayC++;
+				DelyayForMotor++;
 			}
 			else{
-				DelayC = 0;
+				DelyayForMotor = 0;
 			}
 			break;
 		case 4:
@@ -259,7 +257,7 @@ void MotorPhazeControl2() {
 				ac_write_config(&ACA, 0, &aca_config);
 				ac_enable(&ACA, 0);
 			
-				DelayC = 0;
+				DelyayForMotor = 0;
 			}
 		
 			if (ac0Out)															// phase B
@@ -268,16 +266,16 @@ void MotorPhazeControl2() {
 				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 4), 0);
 		
 			if (!ac0Out){
-				if (DelayC > DelayCMax){
+				if (DelyayForMotor > DelyayForMotorMax){
 					if (MotorStatus == 2){
 						MotorNextPhase();
 						return;
 					}
 				}
-				DelayC++;
+				DelyayForMotor++;
 			}
 			else{
-				DelayC = 0;
+				DelyayForMotor = 0;
 			}
 			break;
 		case 5:
@@ -287,7 +285,7 @@ void MotorPhazeControl2() {
 				ac_write_config(&ACA, 0, &aca_config);
 				ac_enable(&ACA, 0);
 			
-				DelayC = 0;
+				DelyayForMotor = 0;
 			}
 		
 			if (ac0Out)															// phase A
@@ -296,16 +294,16 @@ void MotorPhazeControl2() {
 				ioport_set_pin_level(IOPORT_CREATE_PIN(PORTC, 3), 0);
 		
 			if (ac0Out){
-				if (DelayC > DelayCMax){
+				if (DelyayForMotor > DelyayForMotorMax){
 					if (MotorStatus == 2){
 						MotorNextPhase();
 						return;
 					}
 				}
-				DelayC++;
+				DelyayForMotor++;
 			}
 			else{
-				DelayC = 0;
+				DelyayForMotor = 0;
 			}
 			break;
 		default:

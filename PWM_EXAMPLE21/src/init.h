@@ -30,8 +30,8 @@ static void pwm_callback_2 ();
 void acInit();
 static void example_aca_interrupt_callback(AC_t *ac, uint8_t channel, enum ac_status_t status);
 
-void adcInit();
-uint8_t ReadCalibrationByte( uint8_t index );
+//void adcInit();
+//uint8_t ReadCalibrationByte( uint8_t index );
 
 void int_adcb_init(void);
 void init_adc(void);
