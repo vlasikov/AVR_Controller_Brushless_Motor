@@ -29,11 +29,7 @@ void timerC1_tick(){
 		MotorStop();
 		
 	if (MotorStatus==1)	
-		MotorNextPhase();
-		
-// 	if (MotorStatus==3)
-// 		MotorNextPhase();
-		
+		MotorNextPhase();		
 }
 
 /*
@@ -46,7 +42,7 @@ void timerD1_tick(){
 	if (second < 10){
 		second++;
 	} else {
-		second = 0;
+//		second = 0;
 	}
 	
 	switch(second){

@@ -32,18 +32,14 @@ void MotorNextPhase(){
 		case 0:
 			if (MotorStatus == 1){
 				Top_tc_period *= 0.95;
-			}		
-			
-// 			if (Top_tc_period < 15000){
-// 				MotorPower = 16;
-// 			}
+			}
 			
 			if (Top_tc_period < 5000){
 				MotorPower = 22;
 				MotorStatus = 2;
 			}
 			
-			if (MotorStatus == 2) {
+			if (MotorStatus == 2) {								// выставл€ем мощность по потенциометру
 				if (ADC < 2000) {
 					ADC = 2000;
 				}
@@ -55,6 +51,7 @@ void MotorNextPhase(){
 			}
 			tc_write_period(&TCC1, Top_tc_period);
 		
+			// выставл€ем правильно транзисторы
 			pwm_set_duty_cycle_percent(&pwm_botA, 0);
 		
 			ioport_set_pin_level(PWM_TOPB, 0);
@@ -135,15 +132,17 @@ static uint16_t counter = 0; // счетчик оборотов двигател€. такстируетс€ 25 к√ц
 
 void MotorPhazeControl2() {
 	uint8_t ac0Out;
-	if (ac_get_status(&ACA, 0)){
+	if (ac_get_status(&ACA, 0)){												// считываем уровень свободной фазы
 		ac0Out = 0;
 	}
 	else{
 		ac0Out = 1;
 	}
 	
-	if (counter > 2500){
-		MotorStop();
+	if (MotorStatus == 2){
+ 		if (counter > 200){														// 2500 - 600 RPM
+ 			MotorStop();
+ 		}
 	}
 	counter ++;
 	switch (step){
