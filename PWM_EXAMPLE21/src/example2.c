@@ -110,6 +110,8 @@ int main( void )
 	/* Enable global interrupts */
 	cpu_irq_enable();
 	
+	pwm_overflow_int_callback(&pwm_botA, pwm_callback_2);			// запустили прерывания по ШИМ
+	
 	while(1) {
 		/* Do nothing. Everything is handPWM_TOPC by interrupts. */
 	}

@@ -140,7 +140,7 @@ void MotorPhazeControl2() {
 	}
 	
 	if (MotorStatus == 2){
- 		if (counter > 200){														// 2500 - 600 RPM
+ 		if (counter > 200){														// следим за минимальными оборотами 2500 - 600 RPM, по факту 200 норм, херь какая-то
  			MotorStop();
  		}
 	}
@@ -324,6 +324,10 @@ void MotorPhazeControl2() {
  * Остановка двигателя
  */
 
+extern uint8_t second;
+/*
+ *
+ */
 void MotorStop(){
 	ioport_set_pin_level(PWM_TOPA, 0);
 	pwm_set_duty_cycle_percent(&pwm_botA, 0);
@@ -334,5 +338,8 @@ void MotorStop(){
 	ioport_set_pin_level(PWM_TOPC, 1);
 	pwm_set_duty_cycle_percent(&pwm_botB, 0);
 	
-	MotorStatus = 0;
+	// все приводим к начальным условиям
+	Top_tc_period = 15000;
+	MotorStatus = 0;	
+	second = 0;
 }
