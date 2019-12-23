@@ -53,6 +53,9 @@ void timerD1_tick(){
 		case 2:
 			MotorStatus = 1;
 			break;
+		case 9:
+			MotorStop();
+			break;
 		default:
 			break;
 	}
