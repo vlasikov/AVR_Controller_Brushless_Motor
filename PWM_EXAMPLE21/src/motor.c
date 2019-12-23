@@ -341,5 +341,5 @@ void MotorStop(){
 	// все приводим к начальным условиям
 	Top_tc_period = 15000;
 	MotorStatus = 0;	
-	second = 0;
+//	second = 0;
 }

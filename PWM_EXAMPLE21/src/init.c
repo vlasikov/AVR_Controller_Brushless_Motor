@@ -12,7 +12,7 @@
 extern uint8_t MotorStatus;
 extern uint16_t Top_tc_period;
 
-uint8_t second = 0;
+uint16_t second = 0;
 static uint16_t tc_clksel_div = TC_CLKSEL_DIV8_gc;
 struct ac_config aca_config;
 
@@ -39,7 +39,7 @@ void timerC1_tick(){
 
 void timerD1_tick(){
 	ioport_toggle_pin_level(IOPORT_CREATE_PIN(PORTD, 3));			// дергаем ножку PD3
-	if (second < 10){
+	if (second < 400){
 		second++;
 	} else {
 //		second = 0;
@@ -53,7 +53,7 @@ void timerD1_tick(){
 		case 2:
 			MotorStatus = 1;
 			break;
-		case 9:
+		case 300:
 			MotorStop();
 			break;
 		default:
