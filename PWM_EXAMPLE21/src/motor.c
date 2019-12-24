@@ -14,9 +14,9 @@ static uint8_t step_old = 0;
 static uint16_t DelyayForMotor = 0;
 static uint16_t DelyayForMotorMax = 2;
 uint8_t MotorStatus = 0;
-static uint8_t MotorPower = 16;
+static uint8_t MotorPower = MOTOR_POWER_START;
 
-uint16_t Top_tc_period = 15000;
+uint16_t Top_tc_period = MOTOR_PERIOD_START;
 
 extern uint16_t ADC;
 
@@ -339,7 +339,8 @@ void MotorStop(){
 	pwm_set_duty_cycle_percent(&pwm_botB, 0);
 	
 	// все приводим к начальным условиям
-	Top_tc_period = 15000;
+	Top_tc_period = MOTOR_PERIOD_START;
+	MotorPower = MOTOR_POWER_START;
 	MotorStatus = 0;	
 	second = 0;
 }
