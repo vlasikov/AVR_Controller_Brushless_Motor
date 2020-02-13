@@ -8,12 +8,13 @@
 #include <motor.h>
 #include <asf.h>
 
+//Status{STOP = 0, START = 1, RUN = 2,};
 extern struct ac_config aca_config;
 static uint16_t step = 0;
 static uint8_t step_old = 0;
 static uint16_t DelyayForMotor = 0;
-static uint16_t DelyayForMotorMax = 2;
-uint8_t MotorStatus = 0;
+static uint16_t DelyayForMotorMax = 1;			// пауза переключения фазы после перехода обмотки через 0
+uint8_t MotorStatus = STOP;
 static uint8_t MotorPower = MOTOR_POWER_START;
 
 uint16_t Top_tc_period = MOTOR_PERIOD_START;
@@ -31,11 +32,10 @@ void MotorNextPhase(){
 	switch (step){
 		case 0:
 			if (MotorStatus == 1){
-				Top_tc_period *= 0.95;
+				Top_tc_period *= 0.90;
 			}
 			
-			if (Top_tc_period < 5000){
-				MotorPower = 22;
+			if (Top_tc_period < 4500){
 				MotorStatus = 2;
 			}
 			
@@ -124,6 +124,7 @@ void MotorNextPhase(){
 }
 
 /*
+ * Вызов происходит по таймеру (PWM)
  * Функиция проверяет положение двигателя и задает новый угол повората в рабочем режиме (не при разгоне)
  * частота вызова статична 25 кГц
  * выводит на пины PC3, 4, 5 знак фаз A, B, C. соответственно.
@@ -324,7 +325,7 @@ void MotorPhazeControl2() {
  * Остановка двигателя
  */
 
-extern uint8_t second;
+extern uint16_t second;
 /*
  *
  */

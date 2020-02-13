@@ -12,7 +12,7 @@
 extern uint8_t MotorStatus;
 extern uint16_t Top_tc_period;
 
-uint8_t second = 0;
+uint16_t second = 0;
 static uint16_t tc_clksel_div = TC_CLKSEL_DIV8_gc;
 struct ac_config aca_config;
 
@@ -22,39 +22,36 @@ void timerInit(){
 }
 
 /*
- *
+ * Прерывания таймера C1. Период ??мс.
  */
-void timerC1_tick(){	
-// 	if (MotorStatus==0)	
-// 		MotorStop();
-		
-	if (MotorStatus==1)	
+void timerC1_tick(){
+	if (MotorStatus==START)	
 		MotorNextPhase();		
 }
 
+bool startFirst = true;
 /*
- * Прерывания таймера. Период 1с.
+ * Прерывания таймера D1. Период 100мс.
  * При срабатывании инвертируется пин PD3
  */
 
 void timerD1_tick(){
 	ioport_toggle_pin_level(IOPORT_CREATE_PIN(PORTD, 3));			// дергаем ножку PD3
-	if (second < 10){
-		second++;
+	if (second < 10000){
+		second += 100;
 	} else {
 //		second = 0;
 	}
 	
-	switch(second){
-		case 1:
-			MotorStatus = 0;
-			//MotorStop();
-			break;			
-		case 2:
+	if (startFirst){
+		if (second == 200){											// при включении стартуем быстрее
 			MotorStatus = 1;
-			break;
-		default:
-			break;
+			startFirst = false;
+		}
+	}else{
+		if (second == 1000){										// при перезапуске ждем секунду
+			MotorStatus = 1;
+		}
 	}
 	
 //	tc_write_clock_source(&TCC1, tc_clksel_div);
@@ -69,19 +66,22 @@ void tcc1_init()
 	//Initialisation Timer TCC1
 	tc_enable(&TCC1);	
 	tc_set_overflow_interrupt_callback(&TCC1, timerC1_tick); //Cr?ation d'un callback qui sera execut? quand un overflow du timer sera d?clench?.
-	tc_set_wgm(&TCC1, TC_WG_NORMAL);		//Choix du mode du timer0, dans ce cas il comptera jusqu'? sa valeur "TOP" et retombera ? 0
-	tc_write_period(&TCC1, Top_tc_period);			//D?finition de la valeur "TOP"	
+	tc_set_wgm(&TCC1, TC_WG_NORMAL);						//Choix du mode du timer0, dans ce cas il comptera jusqu'? sa valeur "TOP" et retombera ? 0
+	tc_write_period(&TCC1, Top_tc_period);					//D?finition de la valeur "TOP"	
 	tc_set_overflow_interrupt_level(&TCC1, TC_INT_LVL_LO);	//Activation de l'interruption du timer 				
-	tc_write_clock_source(&TCC1, tc_clksel_div);		//Activation de l'horloge du timer 0
+	tc_write_clock_source(&TCC1, tc_clksel_div);			//Activation de l'horloge du timer 0
 }
 
+/*
+ * Настройка таймера для отсчета времени. измеряем в мс
+ */
 void tcd1_init()
 {
 	//Initialisation Timer TCD1
 	tc_enable(&TCD1);	
-	tc_set_overflow_interrupt_callback(&TCD1, timerD1_tick); //Cr?ation d'un callback qui sera execut? quand un overflow du timer sera d?clench?.
-	tc_set_wgm(&TCD1, TC_WG_NORMAL);		//Choix du mode du timer0, dans ce cas il comptera jusqu'? sa valeur "TOP" et retombera ? 0
-	tc_write_period(&TCD1, 30000);			//D?finition de la valeur "TOP"	
+	tc_set_overflow_interrupt_callback(&TCD1, timerD1_tick);//Cr?ation d'un callback qui sera execut? quand un overflow du timer sera d?clench?.
+	tc_set_wgm(&TCD1, TC_WG_NORMAL);						//Choix du mode du timer0, dans ce cas il comptera jusqu'? sa valeur "TOP" et retombera ? 0
+	tc_write_period(&TCD1, 3000);							// прерывания каждые 100мс
 	tc_set_overflow_interrupt_level(&TCD1, TC_INT_LVL_LO);	//Activation de l'interruption du timer 				
 	tc_write_clock_source(&TCD1, TC_CLKSEL_DIV1024_gc);		//Activation de l'horloge du timer 0
 }
@@ -116,7 +116,7 @@ void pwm_callback_2 (){
 }
 
 void acInit(){
-//ac_set_interrupt_callback(&ACA, example_aca_interrupt_callback);
+//  ac_set_interrupt_callback(&ACA, example_aca_interrupt_callback);
 
 	/* Setup the analog comparator B in window mode. */
 	ac_set_mode(&aca_config, AC_MODE_SINGLE );
