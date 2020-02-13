@@ -30,6 +30,9 @@ void timerC1_tick(){
 		
 	if (MotorStatus==1)	
 		MotorNextPhase();		
+		
+	if (MotorStatus==3)
+		MotorNextPhase();
 }
 
 /*

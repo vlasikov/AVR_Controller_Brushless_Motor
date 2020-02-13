@@ -12,7 +12,7 @@ extern struct ac_config aca_config;
 static uint16_t step = 0;
 static uint8_t step_old = 0;
 static uint16_t DelyayForMotor = 0;
-static uint16_t DelyayForMotorMax = 2;
+static uint16_t DelyayForMotorMax = 3;
 uint8_t MotorStatus = 0;
 static uint8_t MotorPower = MOTOR_POWER_START;
 
@@ -31,12 +31,12 @@ void MotorNextPhase(){
 	switch (step){
 		case 0:
 			if (MotorStatus == 1){
-				Top_tc_period *= 0.95;
+				Top_tc_period *= 0.99;
 			}
 			
 			if (Top_tc_period < 5000){
-				MotorPower = 22;
-				MotorStatus = 2;
+				MotorPower = 15;
+				MotorStatus = 3;
 			}
 			
 			if (MotorStatus == 2) {								// выставл€ем мощность по потенциометру
@@ -124,11 +124,12 @@ void MotorNextPhase(){
 }
 
 /*
+ * ¬ызов происходит по таймеру (PWM)
  * ‘ункици€ провер€ет положение двигател€ и задает новый угол повората в рабочем режиме (не при разгоне)
  * частота вызова статична 25 к√ц
  * выводит на пины PC3, 4, 5 знак фаз A, B, C. соответственно.
  */
-static uint16_t counter = 0; // счетчик оборотов двигател€. такстируетс€ 25 к√ц
+static uint16_t counterForPeriodMotor = 0; // счетчик оборотов двигател€. такстируетс€ 25 к√ц
 
 void MotorPhazeControl2() {
 	uint8_t ac0Out;
@@ -139,12 +140,14 @@ void MotorPhazeControl2() {
 		ac0Out = 1;
 	}
 	
-	if (MotorStatus == 2){
- 		if (counter > 200){														// следим за минимальными оборотами 2500 - 600 RPM, по факту 200 норм, херь кака€-то
+	if ( (MotorStatus == 2)||(MotorStatus == 3)  ){
+ 		if (counterForPeriodMotor > 500){										// следим за минимальными оборотами 2500 - 600 RPM, по факту 200 норм, херь кака€-то
  			MotorStop();
+			MotorStop();
  		}
+		 
+		counterForPeriodMotor ++;
 	}
-	counter ++;
 	switch (step){
 		case 0:
 			if (step_old != step) {												// если фаза управлени€ помен€лась
@@ -155,7 +158,7 @@ void MotorPhazeControl2() {
 			
 				DelyayForMotor = 0;
 				
-				counter = 0;													// обнул€ем врем€ просто€ двигател€
+				counterForPeriodMotor = 0;										// обнул€ем врем€ просто€ двигател€
 			}
 		
 			if (ac0Out)															// phase C
