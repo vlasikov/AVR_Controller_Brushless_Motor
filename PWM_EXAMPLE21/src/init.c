@@ -12,7 +12,7 @@
 extern uint8_t MotorStatus;
 extern uint16_t Top_tc_period;
 
-uint16_t second = 0;
+uint16_t systemTime_ms = 0;
 static uint16_t tc_clksel_div = TC_CLKSEL_DIV8_gc;
 struct ac_config aca_config;
 
@@ -37,20 +37,18 @@ bool startFirst = true;
 
 void timerD1_tick(){
 	ioport_toggle_pin_level(IOPORT_CREATE_PIN(PORTD, 3));			// дергаем ножку PD3
-	if (second < 10000){
-		second += 100;
-	} else {
-//		second = 0;
+	if (systemTime_ms < 10000){
+		systemTime_ms += 100;
 	}
 	
 	if (startFirst){
-		if (second == 200){											// при включении стартуем быстрее
-			MotorStatus = 1;
+		if (systemTime_ms == 200){											// при включении стартуем быстрее
+			MotorStatus = START;
 			startFirst = false;
 		}
 	}else{
-		if (second == 1000){										// при перезапуске ждем секунду
-			MotorStatus = 1;
+		if (systemTime_ms == 1000){										// при перезапуске ждем секунду
+			MotorStatus = START;
 		}
 	}
 	

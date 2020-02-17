@@ -31,15 +31,15 @@ void MotorNextPhase(){
 	
 	switch (step){
 		case 0:
-			if (MotorStatus == 1){
+			if (MotorStatus == START){
 				Top_tc_period *= 0.90;
 			}
 			
 			if (Top_tc_period < 4500){
-				MotorStatus = 2;
+				MotorStatus = RUN;
 			}
 			
-			if (MotorStatus == 2) {								// выставл€ем мощность по потенциометру
+			if (MotorStatus == RUN) {								// выставл€ем мощность по потенциометру
 				if (ADC < 2000) {
 					ADC = 2000;
 				}
@@ -124,13 +124,22 @@ void MotorNextPhase(){
 }
 
 /*
+ * «десь немного по€сню.
+ * ¬ моторе 22 магнита. „астоту выставл€ем 1850 оборотов в минуту (30.8 √ц).
+ * «а один переод фазы мотор проходит два магнита, т.е. за полный оборот фаза делает 11 периодов.
+ * т.е. по сути мотор как бы вращаетс€ с частотой 30.8 * 11 = 339 √ц, что примерно 3 мс.
+ * т.к. если мотор вращаетс€ намного медленнее (в 2-3 раза) или стоит, его перезапускаем. 
+ * критическое врем€ дл€ периода примерно 8 мс или 8000 мкс.
+ */
+static uint16_t criticalTime_us = 0; // счетчик оборотов двигател€. такстируетс€ 25 к√ц
+const  uint16_t criticalTimeMax_us = 8000;
+
+/*
  * ¬ызов происходит по таймеру (PWM)
  * ‘ункици€ провер€ет положение двигател€ и задает новый угол повората в рабочем режиме (не при разгоне)
  * частота вызова статична 25 к√ц
  * выводит на пины PC3, 4, 5 знак фаз A, B, C. соответственно.
  */
-static uint16_t counter = 0; // счетчик оборотов двигател€. такстируетс€ 25 к√ц
-
 void MotorPhazeControl2() {
 	uint8_t ac0Out;
 	if (ac_get_status(&ACA, 0)){												// считываем уровень свободной фазы
@@ -140,12 +149,12 @@ void MotorPhazeControl2() {
 		ac0Out = 1;
 	}
 	
-	if (MotorStatus == 2){
- 		if (counter > 200){														// следим за минимальными оборотами 2500 - 600 RPM, по факту 200 норм, херь кака€-то
+	if (MotorStatus == RUN){
+ 		if (criticalTime_us > criticalTimeMax_us){								// следим за минимальными оборотами 2500 - 600 RPM, по факту 200 норм, херь кака€-то
  			MotorStop();
  		}
 	}
-	counter ++;
+	criticalTime_us += 40;
 	switch (step){
 		case 0:
 			if (step_old != step) {												// если фаза управлени€ помен€лась
@@ -156,7 +165,7 @@ void MotorPhazeControl2() {
 			
 				DelyayForMotor = 0;
 				
-				counter = 0;													// обнул€ем врем€ просто€ двигател€
+				criticalTime_us = 0;													// обнул€ем врем€ просто€ двигател€
 			}
 		
 			if (ac0Out)															// phase C
@@ -166,7 +175,7 @@ void MotorPhazeControl2() {
 		
 			if (!ac0Out){
 				if (DelyayForMotor > DelyayForMotorMax){
-					if (MotorStatus == 2){
+					if (MotorStatus == RUN){
 						MotorNextPhase();
 						return;
 					}
@@ -194,7 +203,7 @@ void MotorPhazeControl2() {
 		
 			if (ac0Out){
 				if (DelyayForMotor > DelyayForMotorMax){
-					if (MotorStatus == 2){
+					if (MotorStatus == RUN){
 						MotorNextPhase();
 						return;
 					}
@@ -222,7 +231,7 @@ void MotorPhazeControl2() {
 		
 			if (!ac0Out){
 				if (DelyayForMotor > DelyayForMotorMax){
-					if (MotorStatus == 2){
+					if (MotorStatus == RUN){
 						MotorNextPhase();
 						return;
 					}
@@ -248,7 +257,7 @@ void MotorPhazeControl2() {
 		
 			if (ac0Out){
 				if (DelyayForMotor > DelyayForMotorMax){
-					if (MotorStatus == 2){
+					if (MotorStatus == RUN){
 						MotorNextPhase();
 						return;
 					}
@@ -276,7 +285,7 @@ void MotorPhazeControl2() {
 		
 			if (!ac0Out){
 				if (DelyayForMotor > DelyayForMotorMax){
-					if (MotorStatus == 2){
+					if (MotorStatus == RUN){
 						MotorNextPhase();
 						return;
 					}
@@ -304,7 +313,7 @@ void MotorPhazeControl2() {
 		
 			if (ac0Out){
 				if (DelyayForMotor > DelyayForMotorMax){
-					if (MotorStatus == 2){
+					if (MotorStatus == RUN){
 						MotorNextPhase();
 						return;
 					}
@@ -325,7 +334,7 @@ void MotorPhazeControl2() {
  * ќстановка двигател€
  */
 
-extern uint16_t second;
+extern uint16_t systemTime_ms;
 /*
  *
  */
@@ -342,6 +351,6 @@ void MotorStop(){
 	// все приводим к начальным услови€м
 	Top_tc_period = MOTOR_PERIOD_START;
 	MotorPower = MOTOR_POWER_START;
-	MotorStatus = 0;	
-	second = 0;
+	MotorStatus = STOP;	
+	systemTime_ms = 0;
 }

@@ -24,7 +24,7 @@ void MotorPhazeControl2();
 void MotorStop();
 void MotorNextPhase();
 
-enum Status{STOP = 0, START = 1, RUN = 2,};
+enum Status{STOP, START, RUN,};
 
 
 #endif /* MOTOR_H_ */
