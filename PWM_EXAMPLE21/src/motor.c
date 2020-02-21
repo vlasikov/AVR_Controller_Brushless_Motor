@@ -34,21 +34,21 @@ void MotorNextPhase(){
 				Top_tc_period *= 0.99;
 			}
 			
-			if (Top_tc_period < 5000){
-				MotorPower = 15;
-				MotorStatus = 3;
+			if (Top_tc_period < 4500){
+				MotorPower = 45;
+				MotorStatus = 2;
 			}
 			
-			if (MotorStatus == 2) {								// выставл€ем мощность по потенциометру
-				if (ADC < 2000) {
-					ADC = 2000;
-				}
-				if (ADC > 3000) {
-					ADC = 3000;
-				}
-					
-				MotorPower = 23.0 * (1.0 + (ADC - 2500)/1500.0); // от 15 до 30 хватит 23*1.3
-			}
+// 			if (MotorStatus == 2) {								// выставл€ем мощность по потенциометру
+// 				if (ADC < 2000) {
+// 					ADC = 2000;
+// 				}
+// 				if (ADC > 3000) {
+// 					ADC = 3000;
+// 				}
+// 					
+// 				MotorPower = 23.0 * (1.0 + (ADC - 2500)/1500.0); // от 15 до 30 хватит 23*1.3
+// 			}
 			tc_write_period(&TCC1, Top_tc_period);
 		
 			// выставл€ем правильно транзисторы
