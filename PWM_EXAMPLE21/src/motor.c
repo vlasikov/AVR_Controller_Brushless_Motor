@@ -13,7 +13,7 @@ extern struct ac_config aca_config;
 static uint16_t step = 0;
 static uint8_t step_old = 0;
 static uint16_t DelyayForMotor = 0;
-static uint16_t DelyayForMotorMax = 1;			// пауза переключения фазы после перехода обмотки через 0
+static uint16_t DelyayForMotorMax = 3;			// пауза переключения фазы после перехода обмотки через 0
 uint8_t MotorStatus = STOP;
 static uint8_t MotorPower = MOTOR_POWER_START;
 
@@ -35,7 +35,7 @@ void MotorNextPhase(){
 				Top_tc_period *= 0.90;
 			}
 			
-			if (Top_tc_period < 4500){
+			if (Top_tc_period < 3500){
 				MotorStatus = RUN;
 			}
 			
@@ -47,7 +47,7 @@ void MotorNextPhase(){
 					ADC = 3000;
 				}
 					
-				MotorPower = 23.0 * (1.0 + (ADC - 2500)/1500.0); // от 15 до 30 хватит 23*1.3
+				MotorPower = 24;//23.0 * (1.0 + (ADC - 2500)/1500.0); // от 15 до 30 хватит 23*1.3
 			}
 			tc_write_period(&TCC1, Top_tc_period);
 		
